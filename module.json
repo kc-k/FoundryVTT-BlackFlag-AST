@@ -39,10 +39,9 @@
     }
   ],
   "esmodules": [
-    "scripts/blackflag-ap.js"
-  ],
-  "scripts": [
-    "scripts/lib/lib.js"
+    "scripts/blackflag-ap.js",
+    "scripts/lib/challenge-die.js",
+    "scripts/lib/initiative.js"
   ],
   "styles": [
     "styles/module.css"
