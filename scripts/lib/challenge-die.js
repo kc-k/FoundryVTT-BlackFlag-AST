@@ -1,3 +1,5 @@
+import { MODULE_NAME } from "./lib.js";
+
 /**
  * Primary die used when performing a challenge roll.
  * Copied and modified from BlackFlag system
@@ -49,9 +51,17 @@ class BlackFlagAPChallengeDie extends BlackFlag.dice.ChallengeDie {
 }
 
 
-function updateChallengeDie() {
-  console.log("BLACKFLAG-AP override ChallengeDie");
-  CONFIG.Dice.ChallengeDie = BlackFlagAPChallengeDie;
+export function updateChallengeDie() {
+  game.settings.register(MODULE_NAME, `enable2d10`, {
+    name: game.i18n.format("blackflag-ap.enable2d10"),
+    scope: "world",
+    config: true,
+    requiresReload: true,
+    default: true,
+    type: Boolean
+  });
+  if (game.settings.get(MODULE_NAME, "enable2d10")) {
+    console.log(`${MODULE_NAME} override ChallengeDie`);
+    CONFIG.Dice.ChallengeDie = BlackFlagAPChallengeDie;
+  }
 }
-
-export { updateChallengeDie }
