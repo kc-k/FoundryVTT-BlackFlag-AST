@@ -1,3 +1,5 @@
+import { MODULE_NAME } from "./lib.js";
+
 /* <><><><> <><><><> <><><><> <><><><> */
 /*           Data Preparation          */
 /* <><><><> <><><><> <><><><> <><><><> */
@@ -73,42 +75,64 @@ function blackFlagAPGetInitiativeRollConfig(options = {}) {
 	return rollConfig;
 }
 
-function updateInitiative() {
-  console.log("BLACKFLAG-AP override default initiative ability");
-  CONFIG.BlackFlag.defaultAbilities.initiative = [CONFIG.BlackFlag.defaultAbilities.initiative, "wisdom"]
-
-  // start libwrapper overrides
-  console.log("BLACKFLAG-AP override initiative calculation");
-  // Why doesn't this work? Fine, I'll patch the child classes directly...
-  //libWrapper.register('BlackFlag-AP',
-  //  'BlackFlag.data.actor.InitiativeTemplate.prototype.computeInitiative',
-  //  blackFlagAPComputeInitiative, 'OVERRIDE'
-  //);
-  //libWrapper.register('BlackFlag-AP',
-  //  'BlackFlag.data.actor.InitiativeTemplate.prototype.getInitiativeRollConfig',
-  //  blackFlagAPGetInitiativeRollConfig, 'OVERRIDE'
-  //);
-  libWrapper.register('BlackFlag-AP',
-    'BlackFlag.data.actor.PCData.prototype.computeInitiative',
-    blackFlagAPComputeInitiative, 'OVERRIDE'
-  );
-  libWrapper.register('BlackFlag-AP',
-    'BlackFlag.data.actor.NPCData.prototype.computeInitiative',
-    blackFlagAPComputeInitiative, 'OVERRIDE'
-  );
-  libWrapper.register('BlackFlag-AP',
-    'BlackFlag.data.actor.PCData.prototype.getInitiativeRollConfig',
-    blackFlagAPGetInitiativeRollConfig, 'OVERRIDE'
-  );
-  libWrapper.register('BlackFlag-AP',
-    'BlackFlag.data.actor.NPCData.prototype.getInitiativeRollConfig',
-    blackFlagAPGetInitiativeRollConfig, 'OVERRIDE'
-  );
-  // without libwrapper (for easier testing)
-  //BlackFlag.data.actor.PCData.prototype.computeInitiative = blackFlagAPComputeInitiative;
-  //BlackFlag.data.actor.PCData.prototype.getInitiativeRollConfig = blackFlagAPGetInitiativeRollConfig;
-  //BlackFlag.data.actor.InitiativeTemplate.prototype.computeInitiative = blackFlagAPComputeInitiative;
-  //BlackFlag.data.actor.InitiativeTemplate.prototype.getInitiativeRollConfig = blackFlagAPGetInitiativeRollConfig;
+function initiativeSettings () {
+  game.settings.register(MODULE_NAME, `overrideInitiative`, {
+    name: game.i18n.format("blackflag-ap.overrideInitiative"),
+    scope: "world",
+    config: true,
+    requiresReload: true,
+    default: true,
+    type: Boolean
+  });
+  // TODO allow overriding initiative config (specify which abilities / custom formula)
+  //game.settings.register(MODULE_NAME, `overrideInitiativeAbilities`, {
+  //  name: game.i18n.format("blackflag-ap.overrideInitiativeAbilities"),
+  //  scope: "world",
+  //  config: true,
+  //  default: true,
+  //  type: Boolean
+  //});
 }
 
-export { updateInitiative }
+export function updateInitiative() {
+  initiativeSettings();
+  if (game.settings.get(MODULE_NAME, "overrideInitiative")) {
+    console.log(`${MODULE_NAME} override default initiative ability`);
+    CONFIG.BlackFlag.defaultAbilities.initiative = [CONFIG.BlackFlag.defaultAbilities.initiative, "wisdom"];
+    // TODO allow overriding initiative config (specify which abilities / custom formula)
+    //CONFIG.BlackFlag.defaultAbilities.initiative = game.settings.get(MODULE_NAME, "overrideInitiativeAbilities");
+
+    // start libwrapper overrides
+    console.log(`${MODULE_NAME}  override initiative calculation`);
+    // Why doesn't this work? Fine, I'll patch the child classes directly...
+    //libWrapper.register(MODULE_NAME,
+    //  'BlackFlag.data.actor.InitiativeTemplate.prototype.computeInitiative',
+    //  blackFlagAPComputeInitiative, 'OVERRIDE'
+    //);
+    //libWrapper.register(MODULE_NAME,
+    //  'BlackFlag.data.actor.InitiativeTemplate.prototype.getInitiativeRollConfig',
+    //  blackFlagAPGetInitiativeRollConfig, 'OVERRIDE'
+    //);
+    libWrapper.register(MODULE_NAME,
+        'BlackFlag.data.actor.PCData.prototype.computeInitiative',
+        blackFlagAPComputeInitiative, 'OVERRIDE'
+    );
+    libWrapper.register(MODULE_NAME,
+        'BlackFlag.data.actor.NPCData.prototype.computeInitiative',
+        blackFlagAPComputeInitiative, 'OVERRIDE'
+    );
+    libWrapper.register(MODULE_NAME,
+        'BlackFlag.data.actor.PCData.prototype.getInitiativeRollConfig',
+        blackFlagAPGetInitiativeRollConfig, 'OVERRIDE'
+    );
+    libWrapper.register(MODULE_NAME,
+        'BlackFlag.data.actor.NPCData.prototype.getInitiativeRollConfig',
+        blackFlagAPGetInitiativeRollConfig, 'OVERRIDE'
+    );
+    // without libwrapper (for easier testing)
+    //BlackFlag.data.actor.PCData.prototype.computeInitiative = blackFlagAPComputeInitiative;
+    //BlackFlag.data.actor.PCData.prototype.getInitiativeRollConfig = blackFlagAPGetInitiativeRollConfig;
+    //BlackFlag.data.actor.InitiativeTemplate.prototype.computeInitiative = blackFlagAPComputeInitiative;
+    //BlackFlag.data.actor.InitiativeTemplate.prototype.getInitiativeRollConfig = blackFlagAPGetInitiativeRollConfig;
+  }
+}

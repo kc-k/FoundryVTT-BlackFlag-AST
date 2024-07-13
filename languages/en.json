@@ -1,3 +1,4 @@
 {
-    "MODULE.hello": "hello"
+    "blackflag-ap.enable2d10": "Use 2d10 system",
+    "blackflag-ap.overrideInitiative": "Override initiative to a custom formula"
 }
