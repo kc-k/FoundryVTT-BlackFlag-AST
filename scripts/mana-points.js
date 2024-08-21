@@ -6,7 +6,8 @@ const SPELL_PROG_LOC = "CONFIG.BlackFlag.spellcastingTypes.leveled.progression";
 
 function manaSettings () {
   game.settings.register(MODULE_NAME, `enableMana`, {
-    name: game.i18n.format("blackflag-ap.enableMana"),
+    name: game.i18n.format(`${MODULE_NAME}.mana.enableModule`),
+    hint: game.i18n.format(`${MODULE_NAME}.mana.enableModuleHint`),
     scope: "world",
     config: true,
     requiresReload: true,
@@ -15,7 +16,7 @@ function manaSettings () {
   });
   // Setup the default settings object that things can reference
   game.settings.register(MODULE_NAME, "settings", {
-    name: game.i18n.format("blackflag-ap.enableMana"),
+    name: game.i18n.format(`${MODULE_NAME}.mana.enableMana`),
     scope: "world",
     default: ManaPoints.defaultSettings,
     type: Object,
@@ -23,7 +24,8 @@ function manaSettings () {
     //onChange: (x) => window.location.reload()
   });
   game.settings.register(MODULE_NAME, `chatMessagePrivate`, {
-    name: game.i18n.format("blackflag-ap.enableMana"),
+    name: game.i18n.format(`${MODULE_NAME}.mana.enableChatMessage`),
+    hint: game.i18n.format(`${MODULE_NAME}.mana.enableChatMessageHint`),
     scope: "world",
     config: true,
     requiresReload: false,
@@ -47,39 +49,15 @@ export function setupMana() {
       ManaPoints.checkDialogManaPoints(dialog, html, formData);
     })
 
-    //Hooks.on("updateItem", ManaPoints.calculateManaPoints);
+    Hooks.on("updateItem", ManaPoints.calculateManaPoints);
     Hooks.on("createItem", ManaPoints.calculateManaPointsCreate);
     Hooks.on("preDeleteItem", ManaPoints.removeItemFlag);
-    //Hooks.on("preUpdateItem", ManaPoints.checkManaPointsValues);
 
-    ////Hooks.on("dnd5e.computeLeveledProgression", ManaPoints.calculateManaPointsProgression);
+    Hooks.on("blackFlag.computeLeveledProgression", ManaPoints.calculateManaPoints);
 
-    //Hooks.on("renderActorSheet5eCharacter", (app, html, data) => {
-    //  ManaPoints.alterCharacterSheet(app, html, data);
-    //});
-
-    //Hooks.on("renderActorSheet5eNPC", (app, html, data) => {
-    //  ManaPoints.alterCharacterSheet(app, html, data, 'npc');
-    //});
-
-
-
-    ///**
-    //  * Hook that is triggered after the ManaPointsForm has been rendered. This
-    //  * sets the visiblity of the custom formula fields based on if the current
-    //  * formula is a custom formula.
-    //  */
-    //Hooks.on('renderManaPointsForm', (manaPointsForm, html, data) => {
-    //  const isCustom = (data.isCustom || "").toString().toLowerCase() == "true"
-    //  manaPointsForm.setCustomOnlyVisibility(isCustom)
-    //})
     Hooks.on("blackFlag.preActivityConsumption", (item, consume, options, update) => {
       return ManaPoints.castSpell(item, consume, options, update);
     })
-
-    //Hooks.on("renderItemSheet", async (app, html, data) => {
-    //  ManaPoints.renderManaPointsItem(app, html, data);
-    //})
   }
 }
 
@@ -95,39 +73,11 @@ export class ManaPoints {
     return {
       chatMessagePrivate: "GM",
       spResource: 'Mana',
-      spAutoManapoints: true,
+      autoLevelManaPoints: true,
       spellManaCosts: { 1: 2, 2: 3, 3: 5, 4: 6, 5: 7, 6: 9, 7: 10, 8: 11, 9: 13 },
-      spUseLeveled: false,
       leveledProgressionFormula: { 1: "4", 2: "7", 3: "10", 4: "13", 5: "17", 6: "21", 7: "25", 8: "29", 9: "34", 10: "39", 11: "44", 12: "49", 13: "55", 14: "61", 15: "67", 16: "73", 17: "80", 18: "87", 19: "94", 20: "101" },
       spGmOnly: true,
-      spColorL: '#3a0e5f',
-      spColorR: '#8a40c7',
-      spAnimateBar: true
     };
-  }
-
-  /**
-   * Get a map of formulas to override values specific to those formulas.
-   */
-  static get formulas() {
-    return {
-      CUSTOM: {
-        isCustom: true,
-        leveledProgressionFormula: this.settings.leveledProgressionFormula,
-        spCustomFormulaBase: '',
-        spUseLeveled: false
-      }
-    }
-  }
-
-  static setSpColors() {
-    document.documentElement.style.setProperty('--sp-left-color', ManaPoints.settings.spColorL);
-    document.documentElement.style.setProperty('--sp-right-color', ManaPoints.settings.spColorR);
-    if (ManaPoints.settings.spAnimateBar) {
-      document.documentElement.style.setProperty('--sp-animation-name', 'scroll');
-    } else {
-      document.documentElement.style.setProperty('--sp-animation-name', 'none');
-    }
   }
 
   static isModuleActive() {
@@ -180,6 +130,31 @@ export class ManaPoints {
     return sp[0];
   }
 
+  /**
+   * The function checks if the actor has enough spell points to cast the spell
+   * @param actor - The actor that is being updated.
+   * @param content - The message's content
+   * @returns null
+   */
+  static speakTo(actor, moduleSettings, content) {
+    /** check if message should be visible to all or just player+gm */
+    let speakToUsers;
+    if (moduleSettings.chatMessagePrivate == "GM") {
+      speakToUsers = game.users.filter(u => u.isGM);
+    } else if (moduleSettings.chatMessagePrivate == "All") {
+      speakToUsers = [];
+    }
+    if (speakToUsers !== undefined) {
+      ChatMessage.create({
+        content: content,
+        speaker: ChatMessage.getSpeaker({ alias: actor.name }),
+        isContentVisible: false,
+        isAuthor: true,
+        whisper: speakToUsers
+      });
+    }
+  }
+
 
   /**
    * The function checks if the actor has enough spell points to cast the spell
@@ -188,7 +163,6 @@ export class ManaPoints {
    * @param actor - The actor that is being updated.
    * @returns The update object.
    */
-
   static castSpell(item, consume, options) {
     console.log('MANA CAST SPELL', item, consume, options);
 
@@ -223,13 +197,12 @@ export class ManaPoints {
 
     /** not found any resource for manapoints ? **/
     if (!manaPointItem) {
-        actorNoSP_message = game.i18n.format(`${MODULE_NAME}.mana.actorNoManaPoints`, { ActorName: actor.name, ManaPoints: moduleSettings.spResource });
-        createNewResource_message = game.i18n.format(`${MODULE_NAME}.mana.createManaPointsResource`, { ManaPoints: moduleSettings.spResource });
+      actorNoSP_message = game.i18n.format(`${MODULE_NAME}.mana.actorNoManaPoints`, { ActorName: actor.name, ManaPoints: moduleSettings.spResource });
       ChatMessage.create({
         content: "<i style='color:red;'>" + actorNoSP_message + "</i>",
         speaker: ChatMessage.getSpeaker({ alias: actor.name })
       });
-      ui.notifications.error(createNewResource_message);
+      ui.notifications.error(game.i18n.format(`${MODULE_NAME}.mana.pleaseCreate`, { ManaPoints: manaPointItem.name, ManaItem: COMPENDIUM_SOURCE_ID }));
       return false;
     }
 
@@ -241,31 +214,12 @@ export class ManaPoints {
     /* get spell cost in manapoints */
     const manaPointCost = this.withActorData(settings.spellManaCosts[spellLvl], actor);
 
-    /** check if message should be visible to all or just player+gm */
-    let speakTo;
-    if (moduleSettings.chatMessagePrivate == "GM") {
-      speakTo = game.users.filter(u => u.isGM);
-    } else if (moduleSettings.chatMessagePrivate == "All") {
-      speakTo = [];
-    }
-
-    let updateItem = {
-      'system': {
-        'uses': {}
-      }
-    };
-
     /** update manapoints **/
     if (actualManaPoints - manaPointCost < 0) {
-      if (speakTo !== undefined) {
-        ChatMessage.create({
-          content: "<i style='color:red;'>" + game.i18n.format(`${MODULE_NAME}.mana.notEnoughMana`, { ActorName: actor.name, ManaPoints: moduleSettings.spResource }) + "</i>",
-          speaker: ChatMessage.getSpeaker({ alias: actor.name }),
-          isContentVisible: false,
-          isAuthor: true,
-          whisper: speakTo
-        });
-      }
+      ManaPoints.speakTo(actor, moduleSettings,
+          "<i style='color:red;'>" + game.i18n.format(`${MODULE_NAME}.mana.notEnoughMana`,
+              { ActorName: actor.name, ManaPoints: moduleSettings.spResource }) + "</i>",
+      );
       consume.consumeSpellSlot = false;
       consume.consumeSpellLevel = false;
       consume.createMeasuredTemplate = false;
@@ -276,6 +230,11 @@ export class ManaPoints {
     }
 
     /* character has enough manapoints */
+    let updateItem = {
+      'system': {
+        'uses': {}
+      }
+    };
     consume.consumeSpellLevel = false;
     consume.consumeSpellSlot = false;
     let newManaPointUses = manaPointItem.system.uses.value - manaPointCost;
@@ -283,21 +242,15 @@ export class ManaPoints {
     manaPointItem.update(updateItem);
 
 
-    if (speakTo !== undefined) {
-      ChatMessage.create({
-        content: "<i style='color:green;'>" + game.i18n.format(`${MODULE_NAME}.mana.spellUsingManaPoints`,
+    ManaPoints.speakTo(actor, moduleSettings,
+        "<i style='color:green;'>" + game.i18n.format(`${MODULE_NAME}.mana.spellUsingManaPoints`,
           {
             ActorName: actor.name,
             ManaPoints: moduleSettings.spResource,
             manaPointUsed: manaPointCost,
-            remainingPoints: manaPointItem.system.uses.value
+            remainingPoints: manaPointItem.system.uses.value - manaPointCost
           }) + "</i>",
-        speaker: ChatMessage.getSpeaker({ alias: actor.name }),
-        isContentVisible: false,
-        isAuthor: true,
-        whisper: speakTo
-      });
-    }
+    );
 
     return [item, consume, options];
   }
@@ -312,6 +265,7 @@ export class ManaPoints {
    * @returns the value of the variable `level`
    */
   static async checkDialogManaPoints(dialog, html, formData) {
+    // FIXME Really should see about moving all of this logic into the dialog box configuration instead of the activity rendering
     if (!ManaPoints.isModuleActive())
       return;
 
@@ -339,15 +293,14 @@ export class ManaPoints {
     }
 
     if (!manaPointItem) {
-      // this actor has no spell point resource what to do?
-      /*let messageCreate;
-      messageCreate = game.i18n.format("dnd5e-manapoints.pleaseCreateV3", { ManaPoints: this.settings.spResource });
-      $('#ability-use-form', html).append('<div class="spError">' + messageCreate + '</div>'); */
+      ui.notifications.error(game.i18n.format(`${MODULE_NAME}.mana.pleaseCreate`, { ManaPoints: manaPointItem.name, ManaItem: COMPENDIUM_SOURCE_ID }));
       return;
     }
 
     let level = 'none';
     let cost = 0;
+    let availableManaPoints = manaPointItem.system.uses.max - manaPointItem.system.uses.spent;
+
 
     /** Replace list of spell slots with list of spell point costs **/
     $('select[name="spell.slot"] option', html).each(function () {
@@ -357,7 +310,7 @@ export class ManaPoints {
       //console.log('LEVEL', level);
       cost = ManaPoints.withActorData(ManaPoints.settings.spellManaCosts[level], actor);
 
-      let costTextLookup = game.i18n.format(`${MODULE_NAME}.mana.spellCost`, { amount: cost, ManaPoints: manaPointItem.name });
+      let costTextLookup = game.i18n.format(`${MODULE_NAME}.mana.spellCost`, { amount: cost, available: availableManaPoints, ManaPoints: manaPointItem.name });
       let newText = `${CONFIG.BlackFlag.spellCircles()[level]} (${costTextLookup})`;
       $(this).text(newText);
     })
@@ -381,75 +334,12 @@ export class ManaPoints {
 
     /** Calculate spell point cost and warn user if they have none left */
     let manaPointCost = 0;
-    let actualManaPoints = manaPointItem.system.uses.max - manaPointItem.system.uses.spent;
-
     manaPointCost = ManaPoints.withActorData(ManaPoints.settings.spellManaCosts[baseSpellLvl], actor);
-    const missing_points = (typeof actualManaPoints === 'undefined' || actualManaPoints - manaPointCost < 0);
+    const missing_points = (typeof availableManaPoints === 'undefined' || availableManaPoints - manaPointCost < 0);
     if (missing_points) {
       const messageNotEnough = game.i18n.format(`{MODULE_NAME}.mana.youNotEnough`, { ManaPoints: manaPointItem.name });
       $('#ability-use-form', html).append('<div class="spError">' + messageNotEnough + '</div>');
     }
-
-    // FIXME this doesn't seem to be needed in ToTV like was needed in 5e?
-      // Also really should see about moving all of this logic into the dialog box
-      // configuration instead of the activity rendering
-    //let copyButton = $('.dialog-button', html).clone();
-    //$('.dialog-button', html).addClass('original').hide();
-    //copyButton.addClass('copy').removeClass('use').attr('data-button', '');
-    //$('.dialog-buttons', html).append(copyButton);
-
-    //html.on('click', '.dialog-button.copy', function (e) {
-    //  e.preventDefault();
-    //  /** if not consumeSlot we ignore cost, go on and cast **/
-    //  if (!$('input[name="consume.manaPoints"]', html).prop('checked')) {
-    //    $('.dialog-button.original', html).trigger("click");
-    //  } else if ($('select[name="spell.slot"]', html).length > 0) {
-    //    if (missing_points) {
-    //      ui.notifications.error(messageNotEnough);
-    //      dialog.close();
-    //    } else {
-    //      $('.dialog-button.original', html).trigger("click");
-    //    }
-    //  }
-    //})
-  }
-
-  /**
-   * Calculates the maximum spell points for an actor based on custom formulas.
-   * @param {object} actor The actor used for variables.
-   * @param {object} settings configuration from module or item ovveride
-   * @return {number} The calculated maximum spell points.
-   */
-  static _calculateManaPointsCustom(actor, settings) {
-    let ManaPointsMax = ManaPoints.withActorData(settings.spCustomFormulaBase, actor);
-
-    let hasSpellSlots = false;
-    let manaPointsFromSlots = 0;
-    for (let [slotLvlTxt, slot] of Object.entries(actor.system.spells)) {
-      let slotLvl;
-      if (slotLvlTxt == 'pact') {
-        slotLvl = slot.level;
-      } else {
-        slotLvl = parseInt(slotLvlTxt.replace(/\D/g, ''));
-      }
-
-      if (!slotLvl || slotLvl == 0) {
-        continue;
-      }
-
-      manaPointsFromSlots += slot.max * ManaPoints.withActorData(settings.manaPointsCosts[slotLvl], actor);
-      if (slot.max > 0) {
-        hasSpellSlots = true;
-      }
-    }
-
-    if (!hasSpellSlots) {
-      return 0;
-    }
-
-    ManaPointsMax += manaPointsFromSlots * ManaPoints.withActorData(settings.spCustomFormulaSlotMultiplier, actor);
-
-    return ManaPointsMax;
   }
 
   /**
@@ -467,7 +357,6 @@ export class ManaPoints {
     let changedClassLevel = null;
     let changedClassID = null;
     let levelUpdated = false;
-    const leveledProgression = settings.spUseLeveled;
 
     if (foundry.utils.getProperty(updates.system, 'levels')) {
       changedClassLevel = foundry.utils.getProperty(updates.system, 'levels');
@@ -526,11 +415,7 @@ export class ManaPoints {
     if (totalSpellcastingLevel == 0)
       return 0;
 
-    if (leveledProgression) {
-      return parseInt(this.withActorData(settings.leveledProgressionFormula[totalSpellcastingLevel], actor)) || 0;
-    }
-
-    return parseInt(settings.manaPointsByLevel[totalSpellcastingLevel]) || 0
+    return parseInt(this.withActorData(settings.leveledProgressionFormula[totalSpellcastingLevel], actor)) || 0;
   }
 
   /**
@@ -540,28 +425,29 @@ export class ManaPoints {
    * @param item - The item that was updated.
    * @param updates - The updates that are being applied to the item.
    */
-  static calculateManaPoints(item, updates, id) {
+  static calculateManaPoints(progression, item, updates) {
     const actor = item.parent;
 
     if (!ManaPoints.isModuleActive())
-      return [item, updates, id];
+      return [progression, item, updates];
 
-    if (!ManaPoints.settings.spAutoManapoints) {
-      return [item, updates, id];
+    if (!ManaPoints.settings.autoLevelManaPoints) {
+      return [progression, item, updates];
     }
 
     /* updating or dropping a class item */
 
     if (item.type !== 'class') {
       // check if is the spell point feature being dropped.
-      return [item, updates, id];
+      return [progression, item, updates];
     }
 
-    if (!foundry.utils.getProperty(updates.system, 'levels'))
-      return [item, updates, id];
+    if (!updates?.spellcasting?.type == 'leveled') {
+      return [progression, item, updates];
+    }
 
     ManaPoints.updateManaPointsMax(item, updates, actor, false);
-    return [item, updates, id];
+    return [progression, item, updates];
   }
 
   static processFirstDrop(item) {
@@ -574,9 +460,15 @@ export class ManaPoints {
       return;
     }
 
+    if (!item.flags?.manapoints) {
+      let updateItem = { 'flags': { 'manapoints': { } } };
+      item.update(updateItem);
+    }
+
     const actor = item.parent;
-    if (actor == null)
+    if (actor == null) {
       return;
+    }
 
     let updateActor = {
       'flags': {
@@ -597,53 +489,34 @@ export class ManaPoints {
   }
 
   static updateManaPointsMax(classItem, updates, actor, createdItem) {
-    const actorName = actor.name;
     let manaPointsItem;
     if (createdItem)
       manaPointsItem = createdItem;
     else
       manaPointsItem = ManaPoints.getManaPointsItem(actor);
     if (!manaPointsItem) {
-      // spell points item not found?
+      // mana points item not found?
+      console.log("mana points item missing during mana point value update???");
+      ui.notifications.error(game.i18n.format(`${MODULE_NAME}.mana.pleaseCreate`, { ManaPoints: manaPointItem.name, ManaItem: COMPENDIUM_SOURCE_ID }));
       return;
     }
 
-    let settings;
-    if (manaPointsItem.flags?.manapoints?.override) {
-      settings = foundry.utils.mergeObject(ManaPoints.settings, manaPointsItem.flags.manapoints.config, { overwrite: true, recursive: true });
-    } else {
-      settings = ManaPoints.settings;
-    }
+    let settings = foundry.utils.mergeObject(ManaPoints.settings, manaPointsItem.flags.manapoints.config, { overwrite: true, recursive: true });
 
-    if (!settings.spAutoManapoints) {
+    if (!settings.autoLevelManaPoints) {
       return true;
     }
 
-    const isCustom = settings.isCustom;
-    const spUseLeveled = settings.spUseLeveled;
-    const ManaPointsMax = isCustom && !spUseLeveled ? ManaPoints._calculateManaPointsCustom(actor, settings) : ManaPoints._calculateManaPointsFixed(classItem, updates, actor, settings)
+    const ManaPointsMax = ManaPoints._calculateManaPointsFixed(classItem, updates, actor, settings)
 
-    if (ManaPointsMax > 0) {
-      manaPointsItem.update({
-        [`system.uses.max`]: ManaPointsMax,
-      });
-
-      let speakTo = game.users.filter(u => u.isGM);
-      let message = game.i18n.format("dnd5e-manapoints.manaPointsFound", { ManaPoints: (dndV3 ? manaPointsItem.name : ManaPoints.settings.spResource), Actor: actorName })
-      ChatMessage.create({
-        content: "<i style='color:green;'>" + message + "</i>",
-        speaker: ChatMessage.getSpeaker({ alias: actorName }),
-        isContentVisible: false,
-        isAuthor: true,
-        whisper: speakTo
-      });
+    if (ManaPointsMax > 0 && ManaPointsMax != manaPointsItem.system.uses.max) {
+      let message = game.i18n.format(`${MODULE_NAME}.mana.manaPointsUpdated`,
+          { ManaPoints: manaPointsItem.name, Actor: actor.name, PrevManaPoints: manaPointsItem.system.uses.max, NewManaPoints: ManaPointsMax }
+      )
+      manaPointsItem.update({ [`system.uses.max`]: ManaPointsMax, });
+      ManaPoints.speakTo(actor, this.settings, "<i style='color:green;'>" + message + "</i>");
     }
     return manaPointsItem;
-  }
-
-  /** hook computeLeveledProgression  */
-  static levelProgression(slots, actor, classItem, progression) {
-
   }
 
   /** preDeleteItem */
@@ -651,93 +524,6 @@ export class ManaPoints {
     let actor = item.parent;
     if (item._id == ManaPoints.getActorFlagManaPointItem(actor)) {
       actor.update({ [`flags.manapoints.item`]: '' });
-    }
-  }
-
-  /** pre update item */
-  /** check if max uses is less than value */
-  static checkManaPointsValues(item, update, difference, id) {
-    if (ManaPoints.isManaPointsItem(item)) {
-      let max, value;
-      let changed_uses = false;
-      // check if changed the item uses prevent value exceed max
-      if (update.system?.uses?.max) {
-        max = update.system.uses.max;
-        changed_uses = true;
-      } else {
-        max = item.system.uses.max
-      }
-
-      if (update.system?.uses?.value) {
-        value = update.system.uses.value;
-        changed_uses = true;
-      } else {
-        value = item.system.uses.value
-      }
-
-      if (changed_uses) {
-        if (value > max) {
-          update.system.uses.value = max
-        }
-      }
-
-      //get global module settings for defaults
-      const def = ManaPoints.settings;
-      // store current item configuration
-      let conf = isset(item.flags?.manapoints?.config) ? item.flags?.manapoints?.config : {};
-
-      conf = foundry.utils.mergeObject(conf, def, { recursive: true, insertKeys: true, insertValues: false, overwrite: false })
-
-      conf.isCustom = true;
-
-      if (!isset(item.flags?.manapoints?.config)) {
-        update.flags.manapoints = {
-          [`config`]: item.flags?.manapoints?.override ? conf : {},
-          [`override`]: item.flags?.manapoints?.override
-        };
-      }
-
-      return [item, update, difference, id];
-    }
-  }
-
-  /**
-   * It adds a checkbox to the character sheet that allows the user to enable/disable spell points for
-   * the character
-   * @param app - The application object.
-   * @param html - The HTML of the Actor sheet.
-   * @param data - The data object passed to the sheet.
-   * @returns The return value is the html_checkbox variable.
-   */
-  static async alterCharacterSheet(app, html, data, type) {
-    if (!this.isModuleActive() || data.actor.type != "character") {
-      return;
-    }
-    const actor = data.actor;
-    const ManaPointsItem = this.getManaPointsItem(actor);
-    if (ManaPointsItem) {
-      const value = ManaPointsItem.system.uses.value;
-      const max = ManaPointsItem.system.uses.max;
-      let percent = value / max * 100 > 100 ? 100 : value / max * 100;
-      const template_data = {
-        'editable': data.editable,
-        'name': ManaPointsItem.name,
-        '_id': ManaPointsItem._id,
-        'max': max,
-        'value': value,
-        'percent': percent,
-      }
-      const template_file = "modules/dnd5e-manapoints/templates/spell-points-sheet-tracker.hbs";
-      const rendered_html = await renderTemplate(template_file, template_data);
-
-      $('.sidebar .stats', html).append(rendered_html);
-
-      $('.config-button.manaPoints').off('click').on('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        let config = new ActorManaPointsConfig(ManaPointsItem);
-        config?.render(true);
-      });
     }
   }
 

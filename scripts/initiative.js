@@ -77,7 +77,8 @@ function blackFlagAPGetInitiativeRollConfig(options = {}) {
 
 function initiativeSettings () {
   game.settings.register(MODULE_NAME, `overrideInitiative`, {
-    name: game.i18n.format("blackflag-ap.overrideInitiative"),
+    name: game.i18n.format(`${MODULE_NAME}.overrideInitiative`),
+    hint: game.i18n.format(`${MODULE_NAME}.overrideInitiativeHint`),
     scope: "world",
     config: true,
     requiresReload: true,
