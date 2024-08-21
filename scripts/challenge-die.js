@@ -53,7 +53,8 @@ class BlackFlagAPChallengeDie extends BlackFlag.dice.ChallengeDie {
 
 export function updateChallengeDie() {
   game.settings.register(MODULE_NAME, `enable2d10`, {
-    name: game.i18n.format("blackflag-ap.enable2d10"),
+    name: game.i18n.format(`${MODULE_NAME}.enable2d10`),
+    hint: game.i18n.format(`${MODULE_NAME}.enable2d10Hint`),
     scope: "world",
     config: true,
     requiresReload: true,
