@@ -3,9 +3,9 @@ import { updateChallengeDie } from "./challenge-die.js";
 import { updateInitiative } from "./initiative.js";
 import { setupMana } from "./mana-points.js";
 
-//CONFIG.debug.hooks = true;
-
 Hooks.once('init', async function() {
+  //CONFIG.debug.hooks = true;
+
   // lib-wrapper required
   if(!game.modules.get('lib-wrapper')?.active && game.user.isGM) {
     ui.notifications.error(`Module ${MODULE_NAME} requires the 'libWrapper' module. Please install and activate it.`);

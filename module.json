@@ -4,44 +4,48 @@
   "description": "BlackFlag Advanced Placement - a system evolution of BlackFlag by KP",
   "version": "#{VERSION}#",
   "compatibility": {
-    "minimum": 12,
-    "verified": 12
+    "minimum": "12",
+    "verified": "12"
   },
   "authors": [
     {
       "name": "kc-k",
-      "url": "https://github.com/kc-k"
+      "url": "https://github.com/kc-k",
+      "flags": {}
     }
   ],
   "relationships": {
-    "systems": [{
+    "systems": [
+      {
         "id": "black-flag",
         "type": "system",
         "manifest": "https://github.com/koboldpress/black-flag/releases/latest/download/module.json",
         "compatibility": {
-            "verified": "0.9.034"
+          "verified": "0.9.034"
         }
-    }],
-    "requires": [{
+      }
+    ],
+    "requires": [
+      {
         "id": "lib-wrapper",
         "type": "module",
         "manifest": "https://github.com/ruipin/fvtt-lib-wrapper/releases/latest/download/module.json",
         "compatibility": {
-            "verified": "1.12.13.1"
+          "verified": "1.12.13.1"
         }
-    }]
+      }
+    ]
   },
   "languages": [
     {
       "lang": "en",
       "name": "English",
-      "path": "languages/en.json"
+      "path": "languages/en.json",
+      "flags": {}
     }
   ],
   "esmodules": [
-    "scripts/blackflag-ap.js",
-    "scripts/lib/challenge-die.js",
-    "scripts/lib/initiative.js"
+    "scripts/blackflag-ap.js"
   ],
   "styles": [
     "styles/module.css"
@@ -50,5 +54,18 @@
   "manifest": "#{MANIFEST}#",
   "download": "#{DOWNLOAD}#",
   "license": "LICENSE",
-  "readme": "README.md"
+  "readme": "README.md",
+  "packs": [
+    {
+      "name": "blackflag-ap-items",
+      "label": "blackflag-ap items",
+      "path": "packs/blackflag-ap-items",
+      "type": "Item",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "system": "black-flag"
+    }
+  ]
 }
