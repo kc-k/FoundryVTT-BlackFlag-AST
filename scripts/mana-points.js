@@ -316,6 +316,12 @@ export class ManaPoints {
     if (dialog.config.consume?.manaPoints == undefined || dialog.config.consume?.manaPoints == true) {
       $('input[name="consume.manaPoints"]', html).attr('checked', true);
     }
+    // override the activity use dialog to handle the new option (FIXME)
+    if (html[0].offsetParent.className.includes('manapoints-cast')) {
+      html[0].offsetParent.style.height = '255px'
+    } else if (html[0].className.includes('manapoints-cast')) {
+      html[0].style.height = '255px'
+    }
     /** shouldn't have to do this, instead hook into the activity config directly **/
 
     if (level == 'none')
