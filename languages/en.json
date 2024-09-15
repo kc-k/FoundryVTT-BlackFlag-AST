@@ -51,7 +51,7 @@
     "BlackFlag-AP.mana.manaPointsCostsNote": "You don't need to change the mana point costs if you are using the default mana point rules in DMG (page 288). You can use formulas to determine the cost.",
     "BlackFlag-AP.mana.manaPointsCostsTitle": "{ManaPoints} Costs.",
     "BlackFlag-AP.mana.manaPointsFormula": "Mana Points Progression.",
-    "BlackFlag-AP.mana.manaPointsSettingsItemTitle": "Mana Points Settings.",
+    "BlackFlag-AP.mana.manaPointsSettingsItemTitle": "Mana Points Settings (Click for options)",
     "BlackFlag-AP.mana.spellUsingManaPoints": "{ActorName} cast a spell using {manaPointUsed} {ManaPoints}. {remainingPoints} {ManaPoints} remaining.",
     "BlackFlag-AP.mana.use-spellpoints": "This character uses Mana Points.",
     "BlackFlag-AP.mana.useLeveledProgression": "Progression Based on Caster Level?",
