@@ -44,19 +44,22 @@ function manaSettings () {
 export function setupMana() {
   manaSettings();
   if (game.settings.get(MODULE_NAME, "enableMana")) {
-    /** spell launch dialog **/
     Hooks.on("renderActivityActivationDialog", async (dialog, html, formData) => {
-      ManaPoints.checkDialogManaPoints(dialog, html, formData);
+      ManaPoints.checkDialogManaPoints(dialog, html, formData);  // spell launch dialog
     })
 
     Hooks.on("updateItem", ManaPoints.calculateManaPoints);
-    Hooks.on("createItem", ManaPoints.calculateManaPointsCreate);
-    Hooks.on("preDeleteItem", ManaPoints.removeItemFlag);
+    Hooks.on("createItem", ManaPoints.calculateManaPointsCreate);  // add item reference to actor and calculate uses
+    Hooks.on("preDeleteItem", ManaPoints.removeItemFlag);  // remove item reference from actor
 
-    Hooks.on("blackFlag.computeLeveledProgression", ManaPoints.calculateManaPoints);
+    Hooks.on("blackFlag.computeLeveledProgression", ManaPoints.calculateManaPoints);  // update uses on level up
 
     Hooks.on("blackFlag.preActivityConsumption", (item, consume, options, update) => {
-      return ManaPoints.castSpell(item, consume, options, update);
+      return ManaPoints.castSpell(item, consume, options, update);  // actually use uses on spell cast
+    })
+
+    Hooks.on("renderItemSheet", async (app, html, data) => {
+      ManaPoints.renderManaPointsItem(app, html, data);
     })
   }
 }
@@ -76,7 +79,6 @@ export class ManaPoints {
       autoLevelManaPoints: true,
       spellManaCosts: { 1: 2, 2: 3, 3: 5, 4: 6, 5: 7, 6: 9, 7: 10, 8: 11, 9: 13 },
       leveledProgressionFormula: { 1: "4", 2: "7", 3: "10", 4: "13", 5: "17", 6: "21", 7: "25", 8: "29", 9: "34", 10: "39", 11: "44", 12: "49", 13: "55", 14: "61", 15: "67", 16: "73", 17: "80", 18: "87", 19: "94", 20: "101" },
-      spGmOnly: true,
     };
   }
 
@@ -92,10 +94,6 @@ export class ManaPoints {
   static isManaPointsItem(item) {
     return item.type === "feature" &&
       (item._stats?.compendiumSource === COMPENDIUM_SOURCE_ID);
-  }
-
-  static isMixedActorManaPointEnabled(actor) {
-    return actor?.flags?.manapoints?.enabled ?? false;
   }
 
   /**
@@ -288,7 +286,7 @@ export class ManaPoints {
 
     /** get manapoints **/
     let manaPointItem = ManaPoints.getManaPointsItem(actor);
-    if (manaPointItem && manaPointItem.flags?.manapoints?.override) {
+    if (manaPointItem && manaPointItem.flags?.manapoints?.config) {
       settings = isset(manaPointItem.flags?.manapoints?.config) ? manaPointItem.flags?.manapoints?.config : settings;
     }
 
@@ -534,49 +532,22 @@ export class ManaPoints {
       app.options.submitOnChange = false;
 
       $('.item-properties', html).hide();
-      if (data.editable && (game.user.isGM || ManaPoints.settings?.spGmOnly == false)) {
+      if (data.editable && game.user.isGM) {
         let template_item = item; // data object to pass to the template
-        //get global module settings for defaults
-        const def = ManaPoints.settings;
-        const formulas = ManaPoints.formulas;
-        // store current item configuration
-        let conf = isset(template_item.flags?.manapoints?.config) ? template_item.flags?.manapoints?.config : {};
 
-        conf = foundry.utils.mergeObject(conf, def, { recursive: true, insertKeys: true, insertValues: false, overwrite: false })
+        const def_conf = ManaPoints.settings;  //get global module settings for defaults
+        let conf = template_item.flags?.manapoints?.config ? template_item.flags?.manapoints?.config : {};  // store current item configuration
+        conf = foundry.utils.mergeObject(conf, def_conf, { recursive: true, insertKeys: true, insertValues: false, overwrite: false })
 
-        //conf.spFormula = isset(conf?.spFormula) ? conf?.spFormula : def.spFormula;
-        const preset = conf.spFormula;
-
-        conf.isCustom = isset(conf?.spFormula) ? formulas[preset].isCustom : def.isCustom;
-        /*conf.spAutoManapoints = isset(conf?.spAutoManapoints) ? conf?.spAutoManapoints : def.spAutoManapoints;
-        conf.spCustomFormulaBase = isset(conf?.spCustomFormulaBase) ? conf?.spCustomFormulaBase : def.spCustomFormulaBase;
-        conf.spCustomFormulaSlotMultiplier = isset(conf?.spCustomFormulaSlotMultiplier) ? conf?.spCustomFormulaSlotMultiplier : def.spCustomFormulaSlotMultiplier;
-        conf.spEnableVariant = isset(conf?.spEnableVariant) ? conf?.spEnableVariant : def.spEnableVariant;
-        conf.manaPointsCosts = isset(conf?.manaPointsCosts) ? conf?.manaPointsCosts : def.manaPointsCosts;
-        conf.manaPointsByLevel = isset(conf?.manaPointsByLevel) ? conf?.manaPointsByLevel : def.manaPointsByLevel;
-        conf.spUseLeveled = isset(conf?.spUseLeveled) ? conf?.spUseLeveled : def.spUseLeveled;
-        conf.leveledProgressionFormula = isset(conf?.leveledProgressionFormula) ? conf?.leveledProgressionFormula : def.leveledProgressionFormula;
-        conf.spLifeCost = isset(conf?.spLifeCost) ? conf?.spLifeCost : def.spLifeCost;*/
-
-        if (isset(conf?.previousFormula) && conf?.previousFormula != preset) {
-          // changed formula preset, update manapoints default
-          conf = foundry.utils.mergeObject(conf, formulas[preset], { recursive: true, overwrite: true });
-          conf.previousFormula = preset;
-        }
-
-        if (!isset(template_item.flags?.manapoints?.config)) {
-          template_item.flags.manapoints = {
-            [`config`]: template_item.flags?.manapoints?.override ? conf : {},
-            [`override`]: template_item.flags?.manapoints?.override
-          };
-        }
-
-        template_item.flags.manapoints.spFormulas = Object.fromEntries(Object.keys(ManaPoints.formulas).map(formula_key => [formula_key, game.i18n.localize(`dnd5e-manapoints.${formula_key}`)]));
-        const template_file = "modules/dnd5e-manapoints/templates/spell-points-item.hbs"; // file path for the template file, from Data directory
+        const template_file = `modules/${MODULE_NAME}/templates/mana-points/mana-points-item.hbs`; // file path for the template file, from Data directory
         const rendered_html = await renderTemplate(template_file, template_item);
 
-        $('.sheet-body .tab[data-tab="description"] .item-description', html).prepend(rendered_html);
+        $('.sheet-body .tab[data-tab="description"] .description-area', html).before(rendered_html);
         $('.tab.active', html).scrollTop(app.options?.prevScroll);
+
+        $('.accordion-heading', html).on('click', function () {
+          $('.accordion-content').toggle(500)
+        });
 
         $('input[type="checkbox"], select', html).on('change', function () {
           let scroll = $('.tab.active', html).scrollTop();
