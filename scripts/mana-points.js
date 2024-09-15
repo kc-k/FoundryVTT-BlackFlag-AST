@@ -237,7 +237,7 @@ export class ManaPoints {
 
 
     ManaPoints.speakTo(actor,
-        "<i style='color:green;'>" + game.i18n.format(`${MODULE_NAME}.mana.spellUsingManaPoints`,
+        "<i style='color:purple;'>" + game.i18n.format(`${MODULE_NAME}.mana.spellUsingManaPoints`,
           {
             ActorName: actor.name,
             ManaPoints: this.settings(manaPointItem).manaResource,
@@ -510,7 +510,9 @@ export class ManaPoints {
           { ManaPoints: manaPointsItem.name, Actor: actor.name, PrevManaPoints: manaPointsItem.system.uses.max, NewManaPoints: ManaPointsMax }
       )
       manaPointsItem.update({ [`system.uses.max`]: ManaPointsMax, });
-      ManaPoints.speakTo(actor, this.settings, "<i style='color:green;'>" + message + "</i>");
+      // the update gets called twice so we need to set the value on the item immediately to avoid double posting our message
+      manaPointsItem.system.uses.max = ManaPointsMax;
+      ManaPoints.speakTo(actor, "<i style='color:purple;'>" + message + "</i>");
     }
     return manaPointsItem;
   }
