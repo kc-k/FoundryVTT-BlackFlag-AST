@@ -1,186 +1,85 @@
 <div class="manapoints item-config">
-  <h3 class="description-header accordion-heading">
+  <h2 class="description-header accordion-heading">
     {{localize "BlackFlag-AP.mana.manaPointsSettingsItemTitle"}}
-  </h3>
+  </h2>
   <div class="accordion-content" style="display: none">
-    <div class="manapoints-properties form-group stacked">
-      <label>{{localize "BlackFlag-AP.mana.ItemSettings"}}</label>
-      <label class="checkbox">
-        <input
-          type="checkbox"
-          name="flags.manapoints.override"
-          {{checked flags.manapoints.override}}
-        />
-        {{localize "BlackFlag-AP.mana.overrideProgression"}}
-      </label>
-    </div>
-    <hr>
-    <div class="form-group">
-      <label>{{localize "BlackFlag-AP.mana.formulaLabel"}}</label>
-      <input type="hidden" name="flags.manapoints.config.previousFormula" value="{{flags.manapoints.config.spFormula}}"/>
-      <input type="hidden" name="flags.manapoints.config.isCustom" data-dtype="Boolean" value="{{flags.manapoints.config.isCustom}}"/>
-      <select name="flags.manapoints.config.spFormula" style="flex: 1">
-        {{#select flags.manapoints.config.spFormula}}
-          {{#each flags.manapoints.spFormulas as |name key|}}
-            <option value="{{key}}">{{name}}</option>
-          {{/each}}
-        {{/select}}
-      </select>
-      <p class="notes">{{localize "BlackFlag-AP.mana.formulaNote"}}</p>
-    </div>
+  {{#if false}}  // debug code to see flags in ui settings section
+    <p>{{flags.manapoints}}</p>
+    <p>{{#each flags.manapoints}}
+      {{@key}}: {{this}} <br />
+    {{/each}}</p>
+    <hr />
+    <p>{{#each flags.manapoints.leveledProgressionFormula}}
+      {{@key}}: {{this}} <br />
+    {{/each}}</p>
+    <hr />
+    <p>{{#each flags.manapoints.spellManaCosts}}
+      {{@key}}: {{this}} <br />
+    {{/each}}</p>
+    <hr />
+  {{/if}}
 
     <!-- Enable automatic progression calculation -->
-    <h2>{{localize "BlackFlag-AP.mana.progressionTitle"}}</h2>
     <div class="form-group">
       <label>{{localize "BlackFlag-AP.mana.autoLabel"}}</label>
       <input
         type="checkbox"
-        name="flags.manapoints.config.spAutoSpellpoints"
+        name="flags.manapoints.autoLevelManaPoints"
         data-dtype="Boolean"
-        {{checked flags.manapoints.config.spAutoSpellpoints}}
+        {{checked flags.manapoints.autoLevelManaPoints}}
       />
       <p class="notes">{{localize "BlackFlag-AP.mana.autoNote"}}</p>
     </div>
 
     <!-- Choose Formula -->
-    {{#if flags.manapoints.config.spAutoSpellpoints}}
-      {{#if flags.manapoints.config.isCustom}}
-        <!-- Edit Forumla -->
-        <hr>
-        <div class="spell-points-progression">
-          <h3>{{localize "BlackFlag-AP.mana.spellPointsFormula"}}</h3>
-          <!-- Switch to Leveled progression -->
+    {{#if flags.manapoints.autoLevelManaPoints}}
+      <!-- Edit Forumla -->
+      <hr>
+      <div class="mana-points-progression">
+        <div class="leveled-progression" style="display:block">
+          <!-- Leveled progression -->
+          <h3>{{localize "BlackFlag-AP.mana.leveledProgressionTitle" ManaPoints=name}}</h3>
           <div class="form-group">
-            <label for="flags.manapoints.config.spUseLeveled">{{localize
-                "BlackFlag-AP.mana.useLeveledProgression"
-              }}</label>
-            <input
-              id="flags.manapoints.config.spUseLeveled"
-              type="checkbox"
-              name="flags.manapoints.config.spUseLeveled"
-              data-dtype="Boolean"
-              {{checked flags.manapoints.config.spUseLeveled}}
-            />
+            <label><i>{{localize "BlackFlag-AP.mana.leveledProgressionLevel" }}</i></label>
+            <div><i>{{localize "BlackFlag-AP.mana.leveledProgressionGained" ManaPoints=name}}</i></div>
           </div>
-
-          <div class="leveled-progression" style="display:{{#if flags.manapoints.config.spUseLeveled}}block{{else}}none{{/if}}">
-            <!-- Leveled progression -->
-            <h5>{{localize "BlackFlag-AP.mana.leveledProgressionTitle" manapoints=name}}</h5>
-            <div class="form-group">
-              <label><i>{{localize "BlackFlag-AP.mana.leveledProgressionLevel" }}</i></label>
-              <div><i>{{localize "BlackFlag-AP.mana.leveledProgressionGained" manapoints=name}}</i></div>
-            </div>
-            {{#each flags.manapoints.config.leveledProgressionFormula as |sp level|}}
-              <div class="form-group">
-                <div>
-                  <label>{{spFormat
-                      "BlackFlag-AP.mana.spAtLevel"
-                      characterLevel=level
-                    }}</label>
-                </div>
-                <div>
-                  <textarea
-                    placeholder="0"
-                    class="manapoints"
-                    rows="1"
-                    name="flags.manapoints.config.leveledProgressionFormula.{{level}}"
-                  >{{sp}}</textarea>
-                </div>
+          {{#each flags.manapoints.leveledProgressionFormula as |mana level|}}
+            <div class="form-group" style="gap:10px;">
+              <div>
+                <label>{{localize "BlackFlag-AP.mana.spAtLevel" characterLevel=level }}</label>
               </div>
-            {{/each}}
-            <p class="notes">{{localize "BlackFlag-AP.mana.leveledNotes"}}</p>
-          </div>
-
-          <!-- Single Formula Progression -->
-          <div class="single-formula" style="display:{{#if flags.manapoints.config.spUseLeveled}}none{{else}}block{{/if}}">
-          <h5>{{localize "BlackFlag-AP.mana.formulaBaseLabel"}}</h5>
-          <div class="form-group spell-points">
-            <div>
-              <textarea
-                class="manapoints"
-                rows="3"
-                name="flags.manapoints.config.spCustomFormulaBase"
-              >{{flags.manapoints.config.spCustomFormulaBase}}</textarea>
+                <div class="form-fields">
+                <textarea style="min-height:10px" placeholder="0" class="manapoints" rows="1"
+                  name="flags.manapoints.leveledProgressionFormula.{{level}}">{{mana}}</textarea>
+              </div>
             </div>
-            <p class="notes">{{localize
-                "BlackFlag-AP.mana.formulaBaseNote"
-              }}</p>
-          </div>
-          </div>
+          {{/each}}
+          <p class="notes">{{localize "BlackFlag-AP.mana.leveledNotes"}}</p>
         </div>
-      {{/if}}
+
+      </div>
     {{/if}}
 
-    <hr />
-    <!-- Spell cost per spell level -->
-    <h3>{{localize "BlackFlag-AP.mana.spellPointsCostsTitle" manapoints=name}}</h3>
+    <!-- Mana cost per spell level -->
+    <h3>{{localize "BlackFlag-AP.mana.manaPointsCostsTitle" ManaPoints=name}}</h3>
     <div class="form-group" style="gap:10px;">
       <div><i>{{localize "BlackFlag-AP.mana.spellLevelHeader"}}</i></div>
-      <div><i>{{localize "BlackFlag-AP.mana.neededToCastHeader" manapoints=name}}</i></div>
+      <div><i>{{localize "BlackFlag-AP.mana.neededToCastHeader" ManaPoints=name}}</i></div>
       <div></div>
     </div>
-    {{#each flags.manapoints.config.spellPointsCosts as |cost level|}}
+    {{#each flags.manapoints.spellManaCosts as |cost level|}}
       <div class="form-group manapoints-costs" style="gap:10px;">
-        <label>{{spFormat
-            "BlackFlag-AP.mana.costLabel"
-            slotLevel=level
-          }}</label>
+        <label>{{localize "BlackFlag-AP.mana.costLabel" slotLevel=level}}</label>
         <div class="form-fields">
-          <textarea
-            class="manapoints"
-            rows="1"
-            name="flags.manapoints.config.spellPointsCosts.{{level}}"
-          >{{cost}}</textarea>
+          <textarea style="min-height:10px" class="manapoints" rows="1"
+            name="flags.manapoints.spellManaCosts.{{level}}">{{cost}}</textarea>
         </div>
-        <div class="resource_name"> {{../name}}</div>
       </div>
     {{/each}}
-    <p class="notes">{{localize "BlackFlag-AP.mana.spellPointsCostsNote"}}</p>
-    <!-- Spell cost multiplier -->
-    <div class="form-group spell-points">
-      <div>
-        <label>{{localize "BlackFlag-AP.mana.formulaSlotLabel"}}</label>
-      </div>
-      <div>
-        <textarea
-          class="manapoints"
-          rows="1"
-          placeholder="@abilities.cha.mod"
-          name="flags.manapoints.config.spCustomFormulaSlotMultiplier"
-        >{{flags.manapoints.config.spCustomFormulaSlotMultiplier}}</textarea>
-      </div>
-      <p class="notes">{{localize "BlackFlag-AP.mana.formulaSlotNote"}}</p>
-    </div>
+    <p class="notes">{{localize "BlackFlag-AP.mana.manaPointsCostsNote"}}</p>
 
-      <hr>
-      <!-- Advanced Magic gritty variant -->
-      <div class="form-group">
-        <label>{{localize "BlackFlag-AP.mana.enableVariantLabel"}}</label>
-        <input
-          type="checkbox"
-          name="flags.manapoints.config.spEnableVariant"
-          data-dtype="Boolean"
-          {{checked flags.manapoints.config.spEnableVariant}}
-        />
-        <p class="notes">{{localize "BlackFlag-AP.mana.enableVariantNote"}}</p>
-      </div>
-
-      {{#if flags.manapoints.config.spEnableVariant}}
-        <!-- Advanced Magic gritty variant life cost-->
-        <div class="form-group">
-          <div><label>{{localize
-                "BlackFlag-AP.mana.spLifeCostLabel"
-              }}</label></div>
-          <div>
-            <textarea
-              class="manapoints"
-              rows="1"
-              name="flags.manapoints.config.spLifeCost"
-            >{{flags.manapoints.config.spLifeCost}}</textarea>
-          </div>
-          <p class="notes">{{localize "BlackFlag-AP.mana.spLifeCostNote"}}</p>
-        </div>
-      {{/if}}
+    <!-- Indicate end of settings and beginning of description when settings visible -->
+    <h2>{{localize "BlackFlag-AP.mana.ItemDescriptionTitle"}}</h2>
 
   </div>
 </div>
