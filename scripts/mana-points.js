@@ -14,15 +14,6 @@ function manaSettings () {
     default: true,
     type: Boolean
   });
-  // Setup the default settings object that things can reference
-  game.settings.register(MODULE_NAME, "settings", {
-    name: game.i18n.format(`${MODULE_NAME}.mana.enableMana`),
-    scope: "world",
-    default: ManaPoints.defaultSettings,
-    type: Object,
-    config: false,
-    //onChange: (x) => window.location.reload()
-  });
   game.settings.register(MODULE_NAME, `chatMessagePrivate`, {
     name: game.i18n.format(`${MODULE_NAME}.mana.enableChatMessage`),
     hint: game.i18n.format(`${MODULE_NAME}.mana.enableChatMessageHint`),
@@ -64,20 +55,23 @@ export function setupMana() {
   }
 }
 
+function isset(variable) {  // helper function
+  return (typeof variable !== 'undefined');
+}
+
 export class ManaPoints {
-  static get settings() {
-    let _settings = foundry.utils.mergeObject(this.defaultSettings, game.settings.get(MODULE_NAME, 'settings'), { insertKeys: true, insertValues: true });
-    return foundry.utils.mergeObject(_settings, {chatMessagePrivate: game.settings.get(MODULE_NAME, "chatMessagePrivate")}, { insertKeys: true, insertValues: true});
+  static settings(manaItem) {
+    let _itemSettings = isset(manaItem.flags?.manapoints) ? manaItem.flags?.manapoints : {}
+    return foundry.utils.mergeObject(_itemSettings, this.defaultSettings,
+        { recursive: true, insertKeys: true, insertValues: true, overwrite: false, inplace: false}
+    );
   }
-  /**
-   * Get default settings object.
-   */
+
   static get defaultSettings() {
     return {
-      chatMessagePrivate: "GM",
-      spResource: 'Mana',
+      manaResource: 'Mana',
       autoLevelManaPoints: true,
-      spellManaCosts: { 1: 2, 2: 3, 3: 5, 4: 6, 5: 7, 6: 9, 7: 10, 8: 11, 9: 13 },
+      spellManaCosts: { 1: "2", 2: "3", 3: "5", 4: "6", 5: "7", 6: "9", 7: "10", 8: "11", 9: "13" },
       leveledProgressionFormula: { 1: "4", 2: "7", 3: "10", 4: "13", 5: "17", 6: "21", 7: "25", 8: "29", 9: "34", 10: "39", 11: "44", 12: "49", 13: "55", 14: "61", 15: "67", 16: "73", 17: "80", 18: "87", 19: "94", 20: "101" },
     };
   }
@@ -134,12 +128,13 @@ export class ManaPoints {
    * @param content - The message's content
    * @returns null
    */
-  static speakTo(actor, moduleSettings, content) {
+  static speakTo(actor, content) {
     /** check if message should be visible to all or just player+gm */
+    let speakToSetting = game.settings.get(MODULE_NAME, 'chatMessagePrivate');
     let speakToUsers;
-    if (moduleSettings.chatMessagePrivate == "GM") {
+    if (speakToSetting == "GM") {
       speakToUsers = game.users.filter(u => u.isGM);
-    } else if (moduleSettings.chatMessagePrivate == "All") {
+    } else if (speakToSetting == "All") {
       speakToUsers = [];
     }
     if (speakToUsers !== undefined) {
@@ -174,10 +169,7 @@ export class ManaPoints {
       return [item, consume, options];
 
     let manaPointItem = ManaPoints.getManaPointsItem(actor);
-    const moduleSettings = this.settings
-    let settings = moduleSettings;
-
-    settings = manaPointItem.flags?.manapoints?.config ? manaPointItem.flags?.manapoints.config : settings;
+    let settings = ManaPoints.settings(manaPointItem);
 
     /** check if this is a spell casting **/
     if (!item.isSpell || !item.requiresSpellSlot) {
@@ -195,12 +187,16 @@ export class ManaPoints {
 
     /** not found any resource for manapoints ? **/
     if (!manaPointItem) {
-      actorNoSP_message = game.i18n.format(`${MODULE_NAME}.mana.actorNoManaPoints`, { ActorName: actor.name, ManaPoints: moduleSettings.spResource });
+      actorNoMana_message = game.i18n.format(`${MODULE_NAME}.mana.actorNoManaPoints`,
+          { ActorName: actor.name, ManaPoints: this.defaultSettings.manaResource, ManaItem: COMPENDIUM_SOURCE_ID }
+      );
       ChatMessage.create({
-        content: "<i style='color:red;'>" + actorNoSP_message + "</i>",
+        content: "<i style='color:red;'>" + actorNoMana_message + "</i>",
         speaker: ChatMessage.getSpeaker({ alias: actor.name })
       });
-      ui.notifications.error(game.i18n.format(`${MODULE_NAME}.mana.pleaseCreate`, { ManaPoints: manaPointItem.name, ManaItem: COMPENDIUM_SOURCE_ID }));
+      ui.notifications.error(game.i18n.format(`${MODULE_NAME}.mana.pleaseCreate`, 
+          { ManaPoints: this.defaultSettings.manaResource, ManaItem: COMPENDIUM_SOURCE_ID })
+      );
       return false;
     }
 
@@ -214,9 +210,9 @@ export class ManaPoints {
 
     /** update manapoints **/
     if (actualManaPoints - manaPointCost < 0) {
-      ManaPoints.speakTo(actor, moduleSettings,
+      ManaPoints.speakTo(actor,
           "<i style='color:red;'>" + game.i18n.format(`${MODULE_NAME}.mana.notEnoughMana`,
-              { ActorName: actor.name, ManaPoints: moduleSettings.spResource }) + "</i>",
+              { ActorName: actor.name, ManaPoints: this.settings(manaPointItem).manaResource }) + "</i>",
       );
       consume.consumeSpellSlot = false;
       consume.consumeSpellLevel = false;
@@ -240,11 +236,11 @@ export class ManaPoints {
     manaPointItem.update(updateItem);
 
 
-    ManaPoints.speakTo(actor, moduleSettings,
+    ManaPoints.speakTo(actor,
         "<i style='color:green;'>" + game.i18n.format(`${MODULE_NAME}.mana.spellUsingManaPoints`,
           {
             ActorName: actor.name,
-            ManaPoints: moduleSettings.spResource,
+            ManaPoints: this.settings(manaPointItem).manaResource,
             manaPointUsed: manaPointCost,
             remainingPoints: manaPointItem.system.uses.value - manaPointCost
           }) + "</i>",
@@ -270,9 +266,6 @@ export class ManaPoints {
     /** check if actor is a player character **/
     let actor = foundry.utils.getProperty(dialog, "activity.item.actor");
 
-    // Declare settings as a separate variable because jQuery overrides `this` when in an each() block
-    let settings = this.settings;
-
     /** check if this is a spell **/
     if (foundry.utils.getProperty(dialog, "activity.item.type") !== "spell")
       return;
@@ -286,9 +279,7 @@ export class ManaPoints {
 
     /** get manapoints **/
     let manaPointItem = ManaPoints.getManaPointsItem(actor);
-    if (manaPointItem && manaPointItem.flags?.manapoints?.config) {
-      settings = isset(manaPointItem.flags?.manapoints?.config) ? manaPointItem.flags?.manapoints?.config : settings;
-    }
+    let settings = this.settings(manaPointItem);
 
     if (!manaPointItem) {
       ui.notifications.error(game.i18n.format(`${MODULE_NAME}.mana.pleaseCreate`, { ManaPoints: manaPointItem.name, ManaItem: COMPENDIUM_SOURCE_ID }));
@@ -306,7 +297,7 @@ export class ManaPoints {
 
       level = selectValue.replace('circle-', '');
       //console.log('LEVEL', level);
-      cost = ManaPoints.withActorData(ManaPoints.settings.spellManaCosts[level], actor);
+      cost = ManaPoints.withActorData(settings.spellManaCosts[level], actor);
 
       let costTextLookup = game.i18n.format(`${MODULE_NAME}.mana.spellCost`, { amount: cost, available: availableManaPoints, ManaPoints: manaPointItem.name });
       let newText = `${CONFIG.BlackFlag.spellCircles()[level]} (${costTextLookup})`;
@@ -332,7 +323,7 @@ export class ManaPoints {
 
     /** Calculate spell point cost and warn user if they have none left */
     let manaPointCost = 0;
-    manaPointCost = ManaPoints.withActorData(ManaPoints.settings.spellManaCosts[baseSpellLvl], actor);
+    manaPointCost = ManaPoints.withActorData(settings.spellManaCosts[baseSpellLvl], actor);
     const missing_points = (typeof availableManaPoints === 'undefined' || availableManaPoints - manaPointCost < 0);
     if (missing_points) {
       const messageNotEnough = game.i18n.format(`{MODULE_NAME}.mana.youNotEnough`, { ManaPoints: manaPointItem.name });
@@ -425,11 +416,12 @@ export class ManaPoints {
    */
   static calculateManaPoints(progression, item, updates) {
     const actor = item.parent;
+    let settings = ManaPoints.settings(item);
 
     if (!ManaPoints.isModuleActive())
       return [progression, item, updates];
 
-    if (!ManaPoints.settings.autoLevelManaPoints) {
+    if (!settings.autoLevelManaPoints) {
       return [progression, item, updates];
     }
 
@@ -499,7 +491,7 @@ export class ManaPoints {
       return;
     }
 
-    let settings = foundry.utils.mergeObject(ManaPoints.settings, manaPointsItem.flags.manapoints.config, { overwrite: true, recursive: true });
+    let settings = ManaPoints.settings(manaPointsItem);
 
     if (!settings.autoLevelManaPoints) {
       return true;
@@ -533,14 +525,10 @@ export class ManaPoints {
 
       $('.item-properties', html).hide();
       if (data.editable && game.user.isGM) {
-        let template_item = item; // data object to pass to the template
-
-        const def_conf = ManaPoints.settings;  //get global module settings for defaults
-        let conf = template_item.flags?.manapoints?.config ? template_item.flags?.manapoints?.config : {};  // store current item configuration
-        conf = foundry.utils.mergeObject(conf, def_conf, { recursive: true, insertKeys: true, insertValues: false, overwrite: false })
+        item.flags.manapoints = ManaPoints.settings(item);
 
         const template_file = `modules/${MODULE_NAME}/templates/mana-points/mana-points-item.hbs`; // file path for the template file, from Data directory
-        const rendered_html = await renderTemplate(template_file, template_item);
+        const rendered_html = await renderTemplate(template_file, item);
 
         $('.sheet-body .tab[data-tab="description"] .description-area', html).before(rendered_html);
         $('.tab.active', html).scrollTop(app.options?.prevScroll);
@@ -554,6 +542,10 @@ export class ManaPoints {
           app.options.prevScroll = scroll;
           app.submit();
         });
+
+        // only keep config on item that is different from the default
+        item.flags.manapoints = foundry.utils.diffObject(this.defaultSettings, item.flags?.manapoints);
+
       }
       return (app, html, data);
     }
