@@ -56,6 +56,19 @@
           {{/each}}
           <p class="notes">{{localize "BlackFlag-AP.mana.leveledNotes"}}</p>
         </div>
+        <!-- mana progression extra terms -->
+        <!--  append this boxes contents to the calculation formula for every level -->
+        <!-- ex. "+ 50" adds 50 extra mana or "* 1.5" increases mana by 50% -->
+        <div class="form-group" style="gap:10px;">
+          <div>
+            <label>{{localize "BlackFlag-AP.mana.extraManaTermsTitle" }}</label>
+          </div>
+            <div class="form-fields">
+            <textarea style="min-height:10px" placeholder="0" class="manapoints" rows="1"
+              name="flags.manapoints.leveledProgressionExtraTerms">{{flags.manapoints.leveledProgressionExtraTerms}}</textarea>
+          </div>
+        </div>
+        <p class="notes">{{localize "BlackFlag-AP.mana.extraManaTermsNote"}}</p>
 
       </div>
     {{/if}}
