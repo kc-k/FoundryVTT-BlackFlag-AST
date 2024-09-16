@@ -73,6 +73,7 @@ export class ManaPoints {
       autoLevelManaPoints: true,
       spellManaCosts: { 1: "2", 2: "3", 3: "5", 4: "6", 5: "7", 6: "9", 7: "10", 8: "11", 9: "13" },
       leveledProgressionFormula: { 1: "4", 2: "7", 3: "10", 4: "13", 5: "17", 6: "21", 7: "25", 8: "29", 9: "34", 10: "39", 11: "44", 12: "49", 13: "55", 14: "61", 15: "67", 16: "73", 17: "80", 18: "87", 19: "94", 20: "101" },
+      leveledProgressionExtraTerms: "",
     };
   }
 
@@ -410,7 +411,14 @@ export class ManaPoints {
     if (totalSpellcastingLevel == 0)
       return 0;
 
-    return parseInt(this.withActorData(settings.leveledProgressionFormula[totalSpellcastingLevel], actor)) || 0;
+    let levelFormula = `(${settings.leveledProgressionFormula[totalSpellcastingLevel]}) ${settings.leveledProgressionExtraTerms}`
+    const levelFormulaRegex = /ATLEVEL\[\%(.+?)\%\]/g  // essentially get value between [% and %]
+    let _withActorData = this.withActorData;  // can't use "this" in a lambda function
+    levelFormula = levelFormula.replace(levelFormulaRegex, function(match, level, offset, string) {
+        let levelInt = parseInt(_withActorData(level, actor));
+        return settings.leveledProgressionFormula[levelInt]
+    })
+    return parseInt(this.withActorData(levelFormula, actor)) || 0;
   }
 
   /**

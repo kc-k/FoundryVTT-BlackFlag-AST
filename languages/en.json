@@ -19,6 +19,8 @@
     "BlackFlag-AP.mana.enableChatMessageHint": "Select whom to send successful or failed mana point usage messages to",
     "BlackFlag-AP.mana.enableModule": "Enable Mana Points Module.",
     "BlackFlag-AP.mana.enableModuleHint": "Enables or disables mana points for casting spells. This will override the slot cost for player tokens.",
+    "BlackFlag-AP.mana.extraManaTermsTitle": "Extra Mana Terms",
+    "BlackFlag-AP.mana.extraManaTermsNote": "append this box's contents to the calculation formula at every level ex. \"+ 50\" adds 50 extra mana or \"* 1.5\" increases mana by 50%. To reference a level there is a special notation: ex. \"+ ATLEVEL[% @progression.classes.wizard.levels %] * 0.5\" which adds 50% more for every wizard level you have",
     "BlackFlag-AP.mana.form": "Click the button to open Mana Points System 5e Configuration.",
     "BlackFlag-AP.mana.form-hint": "Here you can configure module behavior, mana point cost, and more.",
     "BlackFlag-AP.mana.form-title": "Mana Points Configuration.",
