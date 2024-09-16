@@ -88,7 +88,7 @@ export class ManaPoints {
 
   static isManaPointsItem(item) {
     return item.type === "feature" &&
-      (item._stats?.compendiumSource === COMPENDIUM_SOURCE_ID);
+      (item._stats?.compendiumSource === COMPENDIUM_SOURCE_ID || isset(item.flags?.manapoints));
   }
 
   /**
