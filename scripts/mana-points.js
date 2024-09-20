@@ -39,7 +39,6 @@ export function setupMana() {
       ManaPoints.checkDialogManaPoints(dialog, html, formData);  // spell launch dialog
     })
 
-    Hooks.on("updateItem", ManaPoints.calculateManaPoints);
     Hooks.on("createItem", ManaPoints.calculateManaPointsCreate);  // add item reference to actor and calculate uses
     Hooks.on("preDeleteItem", ManaPoints.removeItemFlag);  // remove item reference from actor
 
@@ -117,9 +116,16 @@ export class ManaPoints {
     // get the item with source custom label = Mana Points
     let sp = features.filter(s => this.isManaPointsItem(s));
 
-    if (typeof sp == 'undefined') {
+    if (typeof sp == 'undefined' || typeof sp[0] == 'undefined') {
       return false;
     }
+
+    // if our link to this item on the actor is missing add it. This happens if a
+    // duplicate item was added to the actor and then the original was deleted
+    if (!actor.flags?.manapoints?.item) {
+      actor.update({ ['flags.manapoints.item']: sp[0]._id });
+    }
+
     return sp[0];
   }
 
@@ -300,12 +306,12 @@ export class ManaPoints {
       //console.log('LEVEL', level);
       cost = ManaPoints.withActorData(settings.spellManaCosts[level], actor);
 
-      let costTextLookup = game.i18n.format(`${MODULE_NAME}.mana.spellCost`, { amount: cost, available: availableManaPoints, ManaPoints: manaPointItem.name });
+      let costTextLookup = game.i18n.format(`${MODULE_NAME}.mana.spellCost`, { amount: cost, available: availableManaPoints, ManaPoints: settings.manaResource });
       let newText = `${CONFIG.BlackFlag.spellCircles()[level]} (${costTextLookup})`;
       $(this).text(newText);
     })
 
-    const consumeString = game.i18n.format(`${MODULE_NAME}.mana.consumeSpellSlotInput`, { ManaPoints: manaPointItem.name });
+    const consumeString = game.i18n.format(`${MODULE_NAME}.mana.consumeSpellSlotInput`, { ManaPoints: settings.manaResource });
     let consumeInput = $('input[name="consume.spellSlot"]', html).parents('fieldset');
     consumeInput.append('<label class="full-checkbox"><span>' + consumeString + '</span><input type="checkbox" name="consume.manaPoints"></label>');
     /** TODO shouldn't have to do this, instead hook into the activity config directly, replacing this whole hook 
@@ -319,9 +325,9 @@ export class ManaPoints {
     }
     // override the activity use dialog to handle the new option (FIXME)
     if (html[0].offsetParent.className.includes('manapoints-cast')) {
-      html[0].offsetParent.style.height = '255px'
+      html[0].offsetParent.style.height = '225px'
     } else if (html[0].className.includes('manapoints-cast')) {
-      html[0].style.height = '255px'
+      html[0].style.height = '225px'
     }
     /** shouldn't have to do this, instead hook into the activity config directly **/
 
@@ -333,7 +339,7 @@ export class ManaPoints {
     manaPointCost = ManaPoints.withActorData(settings.spellManaCosts[baseSpellLvl], actor);
     const missing_points = (typeof availableManaPoints === 'undefined' || availableManaPoints - manaPointCost < 0);
     if (missing_points) {
-      const messageNotEnough = game.i18n.format(`{MODULE_NAME}.mana.youNotEnough`, { ManaPoints: manaPointItem.name });
+      const messageNotEnough = game.i18n.format(`{MODULE_NAME}.mana.youNotEnough`, { ManaPoints: settings.name });
       $('#ability-use-form', html).append('<div class="spError">' + messageNotEnough + '</div>');
     }
   }
@@ -429,13 +435,10 @@ export class ManaPoints {
    * @param updates - The updates that are being applied to the item.
    */
   static calculateManaPoints(progression, item, updates) {
-    const actor = item.parent;
-    let settings = ManaPoints.settings(item);
-
     if (!ManaPoints.isModuleActive())
       return [progression, item, updates];
 
-    if (!settings.autoLevelManaPoints) {
+    if (!ManaPoints.settings(item).autoLevelManaPoints) {
       return [progression, item, updates];
     }
 
@@ -450,23 +453,31 @@ export class ManaPoints {
       return [progression, item, updates];
     }
 
+    const actor = item.parent;
+    if (!ManaPoints.getManaPointsItem(actor)) {
+      return [progression, item, updates];
+    }
+
     ManaPoints.updateManaPointsMax(item, updates, actor, false);
     return [progression, item, updates];
   }
 
   static processFirstDrop(item) {
-    if (ManaPoints.getActorFlagManaPointItem(item.parent)) {
+    let item_id = ManaPoints.getActorFlagManaPointItem(item.parent);
+    if (item_id) {
+      if (item_id == item._id){
+        return;  // the item is just being updated, its what we already have as our manapoints item on the actor
+      }
       // there is already a manapoints item here.
       ui.notifications.error(game.i18n.format("BlackFlag-AP.mana.alreadySpItemOwned"));
       item.update({
         'name': item.name + ' (' + game.i18n.format("BlackFlag-AP.mana.duplicated") + ')'
       });
-      return;
+      return false;
     }
 
     if (!item.flags?.manapoints) {
-      let updateItem = { 'flags': { 'manapoints': { } } };
-      item.update(updateItem);
+      item.update({ ['flags.manapoints']: {} });
     }
 
     const actor = item.parent;
@@ -474,15 +485,7 @@ export class ManaPoints {
       return;
     }
 
-    let updateActor = {
-      'flags': {
-        'manapoints': {
-          'item': item._id
-        }
-      }
-    };
-    actor.update(updateActor);
-    ManaPoints.updateManaPointsMax({}, {}, actor, item)
+    actor.update({ ['flags.manapoints.item']: item._id });
   }
 
   static calculateManaPointsCreate(item, updates, id) {
@@ -493,17 +496,7 @@ export class ManaPoints {
   }
 
   static updateManaPointsMax(classItem, updates, actor, createdItem) {
-    let manaPointsItem;
-    if (createdItem)
-      manaPointsItem = createdItem;
-    else
-      manaPointsItem = ManaPoints.getManaPointsItem(actor);
-    if (!manaPointsItem) {
-      // mana points item not found?
-      console.log("mana points item missing during mana point value update???");
-      ui.notifications.error(game.i18n.format(`${MODULE_NAME}.mana.pleaseCreate`, { ManaPoints: manaPointItem.name, ManaItem: COMPENDIUM_SOURCE_ID }));
-      return;
-    }
+    let manaPointsItem = createdItem || ManaPoints.getManaPointsItem(actor);
 
     let settings = ManaPoints.settings(manaPointsItem);
 
