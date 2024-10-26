@@ -14,6 +14,15 @@ function manaSettings () {
     default: true,
     type: Boolean
   });
+  game.settings.register(MODULE_NAME, `replaceSpellSlotOption`, {
+    name: game.i18n.format(`${MODULE_NAME}.mana.replaceSpellSlotOption`),
+    hint: game.i18n.format(`${MODULE_NAME}.mana.replaceSpellSlotOptionHint`),
+    scope: "world",
+    config: true,
+    requiresReload: false,
+    default: true,
+    type: Boolean
+  });
   game.settings.register(MODULE_NAME, `chatMessagePrivate`, {
     name: game.i18n.format(`${MODULE_NAME}.mana.enableChatMessage`),
     hint: game.i18n.format(`${MODULE_NAME}.mana.enableChatMessageHint`),
@@ -29,20 +38,24 @@ function manaSettings () {
     type: String,
     onChange: (x) => game.settings.chatMessagePrivate = x
   });
-
 }
 
 export function setupMana() {
   manaSettings();
   if (game.settings.get(MODULE_NAME, "enableMana")) {
+    Hooks.on("blackFlag.preActivateActivity", async (activity, activationConfig, messageConfig, dialogConfig) => {
+      ManaPoints.updateActivityManaPoints(activity, activationConfig, messageConfig, dialogConfig);  // set default resource consumption to manaPoints
+    })
+
     Hooks.on("renderActivityActivationDialog", async (dialog, html, formData) => {
-      ManaPoints.checkDialogManaPoints(dialog, html, formData);  // spell launch dialog
+      ManaPoints.updateDialogManaPoints(dialog, html, formData);  // spell launch dialog
     })
 
     Hooks.on("createItem", ManaPoints.calculateManaPointsCreate);  // add item reference to actor and calculate uses
     Hooks.on("preDeleteItem", ManaPoints.removeItemFlag);  // remove item reference from actor
 
     Hooks.on("blackFlag.computeLeveledProgression", ManaPoints.calculateManaPoints);  // update uses on level up
+    Hooks.on("blackFlag.computePactProgression", ManaPoints.calculateManaPoints);  // warlocks use this hook instead
 
     Hooks.on("blackFlag.preActivityConsumption", (item, consume, options, update) => {
       return ManaPoints.castSpell(item, consume, options, update);  // actually use uses on spell cast
@@ -164,7 +177,7 @@ export class ManaPoints {
    * @returns The update object.
    */
   static castSpell(item, consume, options) {
-    console.log('MANA CAST SPELL', item, consume, options);
+    //console.log('MANA CAST SPELL', item, consume, options);
 
     if (!consume.consume.manaPoints) {
       return [item, consume, options];
@@ -179,17 +192,17 @@ export class ManaPoints {
     let settings = ManaPoints.settings(manaPointItem);
 
     /** check if this is a spell casting **/
-    if (!item.isSpell || !item.requiresSpellSlot) {
-      return [item, consume, options];
-    }
-
-    if (consume.consume.spellSlot) {
-      consume.consume.manaPoints = false;
+    if (!item.isSpell || !item.spellSlotConsumption) {
       return [item, consume, options];
     }
 
     if (consume.consume.manaPoints) {
       consume.consume.spellSlot = false;
+    }
+
+    if (consume.consume.spellSlot) {
+      consume.consume.manaPoints = false;
+      return [item, consume, options];
     }
 
     /** not found any resource for manapoints ? **/
@@ -265,8 +278,39 @@ export class ManaPoints {
    * @param formData - The data that was submitted by the user.
    * @returns the value of the variable `level`
    */
-  static async checkDialogManaPoints(dialog, html, formData) {
-    // FIXME Really should see about moving all of this logic into the dialog box configuration instead of the activity rendering
+  static async updateActivityManaPoints(activity, activationConfig, messageConfig, dialogConfig) {
+    if (!ManaPoints.isModuleActive())
+      return;
+
+    /** check if actor is a player character **/
+    let actor = foundry.utils.getProperty(activity, "item.actor");
+
+    /** check if this is a spell **/
+    if (foundry.utils.getProperty(activity, "item.type") !== "spell")
+      return;
+
+    /** get manapoints **/
+    let manaPointItem = ManaPoints.getManaPointsItem(actor);
+
+    if (!manaPointItem) {
+      return;
+    }
+
+    activationConfig.consume.spellSlot = false;
+    activationConfig.consume.manaPoints = true;
+    return;
+  }
+
+  /**
+   * It checks if the spell is being cast by a player character, and if so, it replaces the spell slot
+   * dropdown with a list of spell point costs, and adds a button to the dialog that will cast the
+   * spell if the spell point cost is available
+   * @param dialog - The dialog object.
+   * @param html - The HTML element of the dialog.
+   * @param formData - The data that was submitted by the user.
+   * @returns the value of the variable `level`
+   */
+  static async updateDialogManaPoints(dialog, html, formData) {
     if (!ManaPoints.isModuleActive())
       return;
 
@@ -276,8 +320,6 @@ export class ManaPoints {
     /** check if this is a spell **/
     if (foundry.utils.getProperty(dialog, "activity.item.type") !== "spell")
       return;
-
-    html.addClass('manapoints-cast');
 
     const spell = dialog.activity.item.system;
 
@@ -289,47 +331,46 @@ export class ManaPoints {
     let settings = this.settings(manaPointItem);
 
     if (!manaPointItem) {
-      ui.notifications.error(game.i18n.format(`${MODULE_NAME}.mana.pleaseCreate`, { ManaPoints: manaPointItem.name, ManaItem: COMPENDIUM_SOURCE_ID }));
       return;
     }
 
     let level = 'none';
     let cost = 0;
     let availableManaPoints = manaPointItem.system.uses.max - manaPointItem.system.uses.spent;
+    let usingPactSlots = false;
 
 
-    /** Replace list of spell slots with list of spell point costs **/
-    $('select[name="spell.slot"] option', html).each(function () {
-      let selectValue = $(this).val();
+    /** Replace list of spell slots with list of spell point costs (only if mana isn't selected) **/
+    let useManaChecked = dialog.config.consume.manaPoints == true ? "checked" : ""
+    if (useManaChecked) {
+        $('select[name="spell.slot"] option', html).each(function () {
+            let selectValue = $(this).val();
+            if (selectValue == "pact") {  // leave warlock pact slots alone
+                // show the right checkbox for consuming resources (if pact is selected allow consuming spell slot instead of mana)
+                usingPactSlots = this.defaultSelected;
+            } else {
+                level = selectValue.replace('circle-', '');
+                //console.log('LEVEL', level);
+                cost = ManaPoints.withActorData(settings.spellManaCosts[level], actor);
 
-      level = selectValue.replace('circle-', '');
-      //console.log('LEVEL', level);
-      cost = ManaPoints.withActorData(settings.spellManaCosts[level], actor);
-
-      let costTextLookup = game.i18n.format(`${MODULE_NAME}.mana.spellCost`, { amount: cost, available: availableManaPoints, ManaPoints: settings.manaResource });
-      let newText = `${CONFIG.BlackFlag.spellCircles()[level]} (${costTextLookup})`;
-      $(this).text(newText);
-    })
+                let costTextLookup = game.i18n.format(`${MODULE_NAME}.mana.spellCost`, { amount: cost, available: availableManaPoints, ManaPoints: settings.manaResource });
+                let newText = `${CONFIG.BlackFlag.spellCircles()[level]} (${costTextLookup})`;
+                $(this).text(newText);
+            }
+        })
+    }
 
     const consumeString = game.i18n.format(`${MODULE_NAME}.mana.consumeSpellSlotInput`, { ManaPoints: settings.manaResource });
-    let consumeInput = $('input[name="consume.spellSlot"]', html).parents('fieldset');
-    consumeInput.append('<label class="full-checkbox"><span>' + consumeString + '</span><input type="checkbox" name="consume.manaPoints"></label>');
-    /** TODO shouldn't have to do this, instead hook into the activity config directly, replacing this whole hook 
-     *   set consume.manaPoints to true on undefined because after this is when it first shows up in the config, so
-     *   rerenders now have the value **/
-    if (dialog.config.consume?.manaPoints == undefined) {
-      $('input[name="consume.spellSlot"]', html).attr('checked', false);
+    let consumeSpellSlotOption = $('input[name="consume.spellSlot"]', html).parents('div.form-group');
+    let consumeInputForm = consumeSpellSlotOption.parent();
+    if (game.settings.get(MODULE_NAME, 'replaceSpellSlotOption') && !usingPactSlots) {
+        consumeSpellSlotOption.hide();
     }
-    if (dialog.config.consume?.manaPoints == undefined || dialog.config.consume?.manaPoints == true) {
-      $('input[name="consume.manaPoints"]', html).attr('checked', true);
+    if (!game.settings.get(MODULE_NAME, 'replaceSpellSlotOption') || !usingPactSlots) {
+        consumeInputForm.append(
+            `<div class="form-group"><label>${consumeString}</label><div class="form-fields"><input type="checkbox" name="consume.manaPoints" ${useManaChecked}></div></div>`
+        );
     }
-    // override the activity use dialog to handle the new option (FIXME)
-    if (html[0].offsetParent.className.includes('manapoints-cast')) {
-      html[0].offsetParent.style.height = '225px'
-    } else if (html[0].className.includes('manapoints-cast')) {
-      html[0].style.height = '225px'
-    }
-    /** shouldn't have to do this, instead hook into the activity config directly **/
 
     if (level == 'none')
       return;
@@ -374,17 +415,16 @@ export class ManaPoints {
       half: [],
       artificer: [],
       third: [],
-      pact: [],
     }
 
     for (let c of actorClasses) {
-      /* spellcasting: pact; full; half; third; artificier; none; **/
-      let spellcasting = c.system.spellcasting.progression;
-      if (spellcasting == 'none') {
-        // check subclasses
-        let subclass = c.subclass;
-        spellcasting = subclass.system.spellcasting.progression;
-      }
+      /* spellcasting: full; half; third; artificier; none; (pact are treated as half casters) **/
+      let spellcasting = c.system?.spellcasting?.progression;
+      //if (spellcasting == 'none' || spellcasting == null) {
+      //  // TODO check subclasses
+      //  let subclass = c.subclass;
+      //  spellcasting = subclass.system?.spellcasting?.progression;
+      //}
 
       let level = c.system.levels;
 
@@ -392,6 +432,7 @@ export class ManaPoints {
       if (levelUpdated && c._id == changedClassID)
         level = changedClassLevel;
 
+      spellcasting = spellcasting == "pact" ? "half" : spellcasting
       if (spellcastingLevels[spellcasting] != undefined) {
         spellcastingLevels[spellcasting].push(level);
         spellcastingClassCount++;
@@ -402,10 +443,9 @@ export class ManaPoints {
 
     let totalSpellcastingLevel = 0
     totalSpellcastingLevel += spellcastingLevels['full'].reduce((sum, level) => sum + level, 0);
-    totalSpellcastingLevel += spellcastingLevels['pact'].reduce((sum, level) => sum + level, 0);
     totalSpellcastingLevel += spellcastingLevels['artificer'].reduce((sum, level) => sum + Math.ceil(level / 2), 0);
     // Half and third casters only round up if they do not multiclass into other spellcasting classes and if they
-    // have enough levels to obtain the spellcasting feature.
+    // have enough levels to obtain the spellcasting feature. pact casters are essentially treated as half casters
     if (spellcastingClassCount == 1 && (spellcastingLevels['half'][0] >= 2 || spellcastingLevels['third'][0] >= 3)) {
       totalSpellcastingLevel += spellcastingLevels['half'].reduce((sum, level) => sum + Math.ceil(level / 2), 0);
       totalSpellcastingLevel += spellcastingLevels['third'].reduce((sum, level) => sum + Math.ceil(level / 3), 0);
