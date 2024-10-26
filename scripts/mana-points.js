@@ -341,35 +341,50 @@ export class ManaPoints {
 
 
     /** Replace list of spell slots with list of spell point costs (only if mana isn't selected) **/
+    $('select[name="spell.slot"] option', html).each(function () {
+        let selectValue = $(this).val();
+        if (selectValue == "pact") {  // leave warlock pact slots alone
+            // show the right checkbox for consuming resources (if pact is selected allow consuming spell slot instead of mana)
+            usingPactSlots = this.defaultSelected;
+        } else if (!dialog.config.consume.spellSlot ) {
+            level = selectValue.replace('circle-', '');
+            //console.log('LEVEL', level);
+            cost = ManaPoints.withActorData(settings.spellManaCosts[level], actor);
+
+            let costTextLookup = game.i18n.format(`${MODULE_NAME}.mana.spellCost`, { amount: cost, available: availableManaPoints, ManaPoints: settings.manaResource });
+            let newText = `${CONFIG.BlackFlag.spellCircles()[level]} (${costTextLookup})`;
+            $(this).text(newText);
+        }
+    })
+
     let useManaChecked = dialog.config.consume.manaPoints == true ? "checked" : ""
-    if (useManaChecked) {
-        $('select[name="spell.slot"] option', html).each(function () {
-            let selectValue = $(this).val();
-            if (selectValue == "pact") {  // leave warlock pact slots alone
-                // show the right checkbox for consuming resources (if pact is selected allow consuming spell slot instead of mana)
-                usingPactSlots = this.defaultSelected;
-            } else {
-                level = selectValue.replace('circle-', '');
-                //console.log('LEVEL', level);
-                cost = ManaPoints.withActorData(settings.spellManaCosts[level], actor);
-
-                let costTextLookup = game.i18n.format(`${MODULE_NAME}.mana.spellCost`, { amount: cost, available: availableManaPoints, ManaPoints: settings.manaResource });
-                let newText = `${CONFIG.BlackFlag.spellCircles()[level]} (${costTextLookup})`;
-                $(this).text(newText);
-            }
-        })
-    }
-
     const consumeString = game.i18n.format(`${MODULE_NAME}.mana.consumeSpellSlotInput`, { ManaPoints: settings.manaResource });
     let consumeSpellSlotOption = $('input[name="consume.spellSlot"]', html).parents('div.form-group');
     let consumeInputForm = consumeSpellSlotOption.parent();
-    if (game.settings.get(MODULE_NAME, 'replaceSpellSlotOption') && !usingPactSlots) {
-        consumeSpellSlotOption.hide();
+    consumeInputForm.append(
+        `<div class="form-group"><label>${consumeString}</label><div class="form-fields"><input type="checkbox" name="consume.manaPoints" ${useManaChecked}></div></div>`
+    );
+    let consumeManaOption = $('input[name="consume.manaPoints"]', html).parents('div.form-group');
+    let consumeInputs = consumeInputForm[0].getElementsByTagName('input');
+
+    if (usingPactSlots) {
+        if (dialog.config.consume.manaPoints) {
+            dialog.config.consume.spellSlot = true;
+            consumeInputs["consume.spellSlot"].checked = true;
+            dialog.config.consume.manaPoints = false;
+            consumeInputs["consume.manaPoints"].checked = false;
+        }
     }
-    if (!game.settings.get(MODULE_NAME, 'replaceSpellSlotOption') || !usingPactSlots) {
-        consumeInputForm.append(
-            `<div class="form-group"><label>${consumeString}</label><div class="form-fields"><input type="checkbox" name="consume.manaPoints" ${useManaChecked}></div></div>`
-        );
+
+    if (game.settings.get(MODULE_NAME, 'replaceSpellSlotOption')) {
+        if (!usingPactSlots) {
+            consumeInputs["consume.spellSlot"].checked = false;
+            consumeSpellSlotOption.hide();
+        } else {
+            consumeInputs["consume.manaPoints"].checked = false;
+            consumeManaOption.hide();
+        }
+
     }
 
     if (level == 'none')
