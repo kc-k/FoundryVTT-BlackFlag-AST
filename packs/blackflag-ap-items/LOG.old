@@ -1,8 +1,3 @@
-2024/10/10-19:32:24.641 e4dc Recovering log #680
-2024/10/10-19:32:24.668 e4dc Delete type=0 #680
-2024/10/10-19:32:24.675 e4dc Delete type=3 #678
-2024/10/10-19:35:01.805 f420 Level-0 table #685: started
-2024/10/10-19:35:01.806 f420 Level-0 table #685: 0 bytes OK
-2024/10/10-19:35:01.809 f420 Delete type=0 #683
-2024/10/10-19:35:01.816 f420 Manual compaction at level-0 from '!items!bSiYtPANAZmtnVWZ' @ 72057594037927935 : 1 .. '!items!pMLE2CKogNahgJOO' @ 0 : 0; will stop at (end)
-2024/10/10-19:35:01.824 f420 Manual compaction at level-1 from '!items!bSiYtPANAZmtnVWZ' @ 72057594037927935 : 1 .. '!items!pMLE2CKogNahgJOO' @ 0 : 0; will stop at (end)
+2024/10/26-14:44:16.693 14de0 Recovering log #914
+2024/10/26-14:44:16.719 14de0 Delete type=0 #914
+2024/10/26-14:44:16.725 14de0 Delete type=3 #912
