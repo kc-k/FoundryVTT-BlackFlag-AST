@@ -422,7 +422,7 @@ export class ManaPoints {
       levelUpdated = true;
     }
     // check for multiclasses
-    const actorClasses = actor.items.filter(i => i.type === "class");
+    const actorClassAndSubclasses = actor.items.filter(i => (i.type == "class" || i.type == "subclass") && i.system?.spellcasting)
 
     let spellcastingClassCount = 0;
     const spellcastingLevels = {
@@ -432,22 +432,17 @@ export class ManaPoints {
       third: [],
     }
 
-    for (let c of actorClasses) {
+    for (let c of actorClassAndSubclasses) {
       /* spellcasting: full; half; third; artificier; none; (pact are treated as half casters) **/
       let spellcasting = c.system?.spellcasting?.progression;
-      //if (spellcasting == 'none' || spellcasting == null) {
-      //  // TODO check subclasses
-      //  let subclass = c.subclass;
-      //  spellcasting = subclass.system?.spellcasting?.progression;
-      //}
-
       let level = c.system.levels;
 
       // get updated class new level
-      if (levelUpdated && c._id == changedClassID)
+      if (levelUpdated && c._id == changedClassID) {
         level = changedClassLevel;
+      }
 
-      spellcasting = spellcasting == "pact" ? "half" : spellcasting
+      spellcasting = spellcasting == "pact" ? "half" : spellcasting  // make pact casters the same as half casters
       if (spellcastingLevels[spellcasting] != undefined) {
         spellcastingLevels[spellcasting].push(level);
         spellcastingClassCount++;
