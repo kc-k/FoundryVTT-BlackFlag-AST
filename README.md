@@ -8,7 +8,60 @@
 <!--- ![Forge Installs](https://img.shields.io/badge/dynamic/json?label=Forge%20Installs&query=package.installs&suffix=%25&url=https%3A%2F%2Fforge-vtt.com%2Fapi%2Fbazaar%2Fpackage%2F<your-module-name>&colorB=4aa94a) -->
 
 
-NOTE!!!!
+# FoundryVTT Module
+
+## BlackFlag: Advanced Play
+This is a collection of system modifications for the BlackFlag system. The changes are mostly configurable, so you can
+drop in the pieces you want to use for your game, with modifications ranging from minor tweaks to extensive play changes.
+
+## Available Additions
+
+### Initiative
+Initiative is now DEX + WIS across the board. You may need to adjust some monster's initiative slightly to compensate
+
+### 2d10 gameplay system
+Replaces standard d20 rolls with 2d10. This has wide ranging impacts to gameplay and balance assumptions. There are more
+details [here](linksomeday) with what kind of impact you can expect and options for how to adjust certain checks / DCs
+to account for the changes.
+
+### Mana Point system
+This adds an optional (and can be used in conjunction with spell slots) mana pool system. The cost for spells and size
+of the mana pool for a character is configurable.
+
+### (TODO) NPC recharge timing
+I think an NPC should roll recharge at the end of its turn so the GM can narratively describe the recharge taking place.
+This gives PCs a bit more strategy, ex. They "see" the dragon preparing to unleash a deadly fire breath again and can do
+things about it which seems more tactically, and cinematically, appropriate.
+
+### (TODO?) Exhaustion system
+This uses the 5e24 exhaustion as inspiration and tweaks it to be easier to apply to PCs without repercussions
+- Exhaustion for a character has 12 levels.
+- All checks (d20 / 2d10 rolls) have a penalty equal to your current Exhaustion level.
+- For every 2 exhaustion your speed is reduced by 5ft.
+- At 12 exhaustion, you become unconscious and will die unless someone nurses you back to health.
+
+### (TODO?) Updated Rest system
+This will change resting to be a 3 rest system instead of a 2 rest system. This will generally increase the "gritty"
+feel of gameplay and slow things down. The planned rests are as follows:
+- Short rest - No mechanical change. Suggested to limit to 1 short rest per day for extra challenge.
+- Medium rest - New rest option that happens over 8 hours of rest and sleep similar to how a long rest normally
+  functions. 
+  - If you don't sleep for the night, gain 2 exhaustion
+  - Recover 1 exhaustion level
+  - Recover half number of HD - Requires a ration to be consumed
+  - Gain the benefits of a short rest
+- Long rest - This functions as a slightly stronger normal long rest but with an increased time of resting
+  - Takes 24 hours of downtime (2 Medium rests with simple or routine tasks for the entire day between).
+  - Must be attempted in a safe place, like an inn or maybe a very good camp area
+  - Restores all hit dice and recovers all Exhaustion
+
+### (TODO?) Food system
+This would require a calendar module. Every day 1 ration is consumed from PC automatically. If a ration can't be
+consumed then the hungry condition (stacking) is applied. On every medium or long rest with hungry make a
+CON save DC 8 + (3 * hunger) or suffer 1 exhaustion per hunger stack. Eating a ration or food reduces hunger by 1
+
+
+## DEV NOTE!
 windows to wsl sym link for foundryvtt development
 New-Item -ItemType SymbolicLink -Path "F:/FoundryVTT/Data/modules/BlackFlag-AP" -Target "\\wsl$\Ubuntu22.04\home\<user>/git/FoundryVTT-BlackFlag-AP"
 
@@ -67,10 +120,3 @@ When listing a new version, Version should be the version number you set above, 
 > It is very important that you use the specific release manifest url, and not the `/latest` url here. For more details about why this is important and how Foundry Installs/Updates packages, read [this wiki article](https://foundryvtt.wiki/en/development/guides/releases-and-history).
 
 Clicking "Save" in the bottom right will save the new version, which means that anyone installing your module from within Foundry will get that version, and a post will be generated in the #release-announcements channel on the official Foundry VTT Discord.
-
-
-# FoundryVTT Module
-
-Does something, probably
-
-## Changelog
