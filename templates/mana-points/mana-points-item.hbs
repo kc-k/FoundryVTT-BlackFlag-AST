@@ -1,6 +1,6 @@
 <div class="manapoints item-config">
   <h2 class="description-header accordion-heading">
-    {{localize "BlackFlag-AP.mana.manaPointsSettingsItemTitle"}}
+    {{localize "BF-AST.mana.itemConfig.settingsTitleSection"}}
   </h2>
   <div class="accordion-content" style="display: none">
   {{#if false}}  // debug code to see flags in ui settings section
@@ -21,14 +21,14 @@
 
     <!-- Enable automatic progression calculation -->
     <div class="form-group">
-      <label>{{localize "BlackFlag-AP.mana.autoLabel"}}</label>
+      <label>{{localize "BF-AST.mana.itemConfig.autoCalculate.label"}}</label>
       <input
         type="checkbox"
         name="flags.manapoints.autoLevelManaPoints"
         data-dtype="Boolean"
         {{checked flags.manapoints.autoLevelManaPoints}}
       />
-      <p class="notes">{{localize "BlackFlag-AP.mana.autoNote"}}</p>
+      <p class="notes">{{localize "BF-AST.mana.itemConfig.autoCalculate.hint"}}</p>
     </div>
 
     <!-- Choose Formula -->
@@ -38,15 +38,16 @@
       <div class="mana-points-progression">
         <div class="leveled-progression" style="display:block">
           <!-- Leveled progression -->
-          <h3>{{localize "BlackFlag-AP.mana.leveledProgressionTitle" ManaPoints=name}}</h3>
+          <h3>{{localize "BF-AST.mana.itemConfig.leveledProgression.sectionLabel" ManaPoints=name}}</h3>
+          <p class="notes">{{localize "BF-AST.mana.itemConfig.leveledProgression.sectionHint"}}</p>
           <div class="form-group">
-            <label><i>{{localize "BlackFlag-AP.mana.leveledProgressionLevel" }}</i></label>
-            <div><i>{{localize "BlackFlag-AP.mana.leveledProgressionGained" ManaPoints=name}}</i></div>
+            <label><i>{{localize "BF-AST.mana.itemConfig.leveledProgression.tableLevelHeader" }}</i></label>
+            <div><i>{{localize "BF-AST.mana.itemConfig.leveledProgression.tableAmountHeader" ManaPoints=name}}</i></div>
           </div>
           {{#each flags.manapoints.leveledProgressionFormula as |mana level|}}
             <div class="form-group" style="gap:10px;">
               <div>
-                <label>{{localize "BlackFlag-AP.mana.spAtLevel" characterLevel=level }}</label>
+                <label>{{localize "BF-AST.mana.itemConfig.leveledProgression.amountAtLevel" characterLevel=level }}</label>
               </div>
                 <div class="form-fields">
                 <textarea style="min-height:10px" placeholder="0" class="manapoints" rows="1"
@@ -54,45 +55,44 @@
               </div>
             </div>
           {{/each}}
-          <p class="notes">{{localize "BlackFlag-AP.mana.leveledNotes"}}</p>
         </div>
         <!-- mana progression extra terms -->
         <!--  append this boxes contents to the calculation formula for every level -->
         <!-- ex. "+ 50" adds 50 extra mana or "* 1.5" increases mana by 50% -->
         <div class="form-group" style="gap:10px;">
           <div>
-            <label>{{localize "BlackFlag-AP.mana.extraManaTermsTitle" }}</label>
+            <label>{{localize "BF-AST.mana.itemConfig.leveledProgression.extraManaTermsLabel" }}</label>
           </div>
             <div class="form-fields">
             <textarea style="min-height:10px" placeholder="0" class="manapoints" rows="1"
               name="flags.manapoints.leveledProgressionExtraTerms">{{flags.manapoints.leveledProgressionExtraTerms}}</textarea>
           </div>
         </div>
-        <p class="notes">{{localize "BlackFlag-AP.mana.extraManaTermsNote"}}</p>
+        <p class="notes">{{localize "BF-AST.mana.itemConfig.leveledProgression.extraManaTermsHint"}}</p>
 
       </div>
     {{/if}}
 
     <!-- Mana cost per spell level -->
-    <h3>{{localize "BlackFlag-AP.mana.manaPointsCostsTitle" ManaPoints=name}}</h3>
+    <h3>{{localize "BF-AST.mana.itemConfig.costs.sectionLabel" ManaPoints=name}}</h3>
+    <p class="notes">{{localize "BF-AST.mana.itemConfig.costs.sectionHint"}}</p>
     <div class="form-group" style="gap:10px;">
-      <div><i>{{localize "BlackFlag-AP.mana.spellLevelHeader"}}</i></div>
-      <div><i>{{localize "BlackFlag-AP.mana.neededToCastHeader" ManaPoints=name}}</i></div>
+      <div><i>{{localize "BF-AST.mana.itemConfig.costs.tableSpellCircleHeader"}}</i></div>
+      <div><i>{{localize "BF-AST.mana.itemConfig.costs.tableCostToCastHeader" ManaPoints=name}}</i></div>
       <div></div>
     </div>
     {{#each flags.manapoints.spellManaCosts as |cost level|}}
       <div class="form-group manapoints-costs" style="gap:10px;">
-        <label>{{localize "BlackFlag-AP.mana.costLabel" slotLevel=level}}</label>
+        <label>{{localize "BF-AST.mana.itemConfig.costs.costAtCircle" slotLevel=level}}</label>
         <div class="form-fields">
           <textarea style="min-height:10px" class="manapoints" rows="1"
             name="flags.manapoints.spellManaCosts.{{level}}">{{cost}}</textarea>
         </div>
       </div>
     {{/each}}
-    <p class="notes">{{localize "BlackFlag-AP.mana.manaPointsCostsNote"}}</p>
 
     <!-- Indicate end of settings and beginning of description when settings visible -->
-    <h2>{{localize "BlackFlag-AP.mana.ItemDescriptionTitle"}}</h2>
+    <h2>{{localize "BF-AST.mana.itemConfig.settingsEndSection"}}</h2>
 
   </div>
 </div>

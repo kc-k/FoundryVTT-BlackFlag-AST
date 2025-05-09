@@ -1,13 +1,14 @@
 import { MODULE_NAME } from "./lib.js";
+import { MODULE_SHORT } from "./lib.js";
 
 export const ITEM_ID = 'TpcB4d7o34UOWenr';
-export const COMPENDIUM_SOURCE_ID = `Compendium.${MODULE_NAME}.blackflag-ap-items.Item.${ITEM_ID}`;
+export const COMPENDIUM_SOURCE_ID = `Compendium.${MODULE_NAME}.blackflag-ast-items.Item.${ITEM_ID}`;
 const SPELL_PROG_LOC = "CONFIG.BlackFlag.spellcastingTypes.leveled.progression";
 
 function manaSettings () {
   game.settings.register(MODULE_NAME, `enableMana`, {
-    name: game.i18n.format(`${MODULE_NAME}.mana.enableModule`),
-    hint: game.i18n.format(`${MODULE_NAME}.mana.enableModuleHint`),
+    name: game.i18n.format(`${MODULE_SHORT}.settings.mana.enableModule.label`),
+    hint: game.i18n.format(`${MODULE_SHORT}.settings.mana.enableModule.hint`),
     scope: "world",
     config: true,
     requiresReload: true,
@@ -15,8 +16,8 @@ function manaSettings () {
     type: Boolean
   });
   game.settings.register(MODULE_NAME, `replaceSpellSlotOption`, {
-    name: game.i18n.format(`${MODULE_NAME}.mana.replaceSpellSlotOption`),
-    hint: game.i18n.format(`${MODULE_NAME}.mana.replaceSpellSlotOptionHint`),
+    name: game.i18n.format(`${MODULE_SHORT}.settings.mana.replaceSpellSlotOption.label`),
+    hint: game.i18n.format(`${MODULE_SHORT}.settings.mana.replaceSpellSlotOption.hint`),
     scope: "world",
     config: true,
     requiresReload: false,
@@ -24,8 +25,8 @@ function manaSettings () {
     type: Boolean
   });
   game.settings.register(MODULE_NAME, `chatMessagePrivate`, {
-    name: game.i18n.format(`${MODULE_NAME}.mana.enableChatMessage`),
-    hint: game.i18n.format(`${MODULE_NAME}.mana.enableChatMessageHint`),
+    name: game.i18n.format(`${MODULE_SHORT}.settings.mana.enableChatMessage.label`),
+    hint: game.i18n.format(`${MODULE_SHORT}.settings.mana.enableChatMessage.hint`),
     scope: "world",
     config: true,
     requiresReload: false,
@@ -207,14 +208,14 @@ export class ManaPoints {
 
     /** not found any resource for manapoints ? **/
     if (!manaPointItem) {
-      actorNoMana_message = game.i18n.format(`${MODULE_NAME}.mana.actorNoManaPoints`,
+      actorNoMana_message = game.i18n.format(`${MODULE_SHORT}.mana.actor.noManaItemMessage`,
           { ActorName: actor.name, ManaPoints: this.defaultSettings.manaResource, ManaItem: COMPENDIUM_SOURCE_ID }
       );
       ChatMessage.create({
         content: "<i style='color:red;'>" + actorNoMana_message + "</i>",
         speaker: ChatMessage.getSpeaker({ alias: actor.name })
       });
-      ui.notifications.error(game.i18n.format(`${MODULE_NAME}.mana.pleaseCreate`, 
+      ui.notifications.error(game.i18n.format(`${MODULE_SHORT}.mana.pleaseCreateManaItem`, 
           { ManaPoints: this.defaultSettings.manaResource, ManaItem: COMPENDIUM_SOURCE_ID })
       );
       return false;
@@ -231,7 +232,7 @@ export class ManaPoints {
     /** update manapoints **/
     if (actualManaPoints - manaPointCost < 0) {
       ManaPoints.speakTo(actor,
-          "<i style='color:red;'>" + game.i18n.format(`${MODULE_NAME}.mana.notEnoughMana`,
+          "<i style='color:red;'>" + game.i18n.format(`${MODULE_SHORT}.mana.actor.notEnoughMana`,
               { ActorName: actor.name, ManaPoints: this.settings(manaPointItem).manaResource }) + "</i>",
       );
       consume.consumeSpellSlot = false;
@@ -257,7 +258,7 @@ export class ManaPoints {
 
 
     ManaPoints.speakTo(actor,
-        "<i style='color:purple;'>" + game.i18n.format(`${MODULE_NAME}.mana.spellUsingManaPoints`,
+        "<i style='color:purple;'>" + game.i18n.format(`${MODULE_SHORT}.mana.actor.spellUsingManaMessage`,
           {
             ActorName: actor.name,
             ManaPoints: this.settings(manaPointItem).manaResource,
@@ -351,14 +352,14 @@ export class ManaPoints {
             //console.log('LEVEL', level);
             cost = ManaPoints.withActorData(settings.spellManaCosts[level], actor);
 
-            let costTextLookup = game.i18n.format(`${MODULE_NAME}.mana.spellCost`, { amount: cost, available: availableManaPoints, ManaPoints: settings.manaResource });
+            let costTextLookup = game.i18n.format(`${MODULE_SHORT}.mana.actor.spellCost`, { amount: cost, available: availableManaPoints, ManaPoints: settings.manaResource });
             let newText = `${CONFIG.BlackFlag.spellCircles()[level]} (${costTextLookup})`;
             $(this).text(newText);
         }
     })
 
     let useManaChecked = dialog.config.consume.manaPoints == true ? "checked" : ""
-    const consumeString = game.i18n.format(`${MODULE_NAME}.mana.consumeSpellSlotInput`, { ManaPoints: settings.manaResource });
+    const consumeString = game.i18n.format(`${MODULE_SHORT}.mana.actor.consumeManaInput`, { ManaPoints: settings.manaResource });
     let consumeSpellSlotOption = $('input[name="consume.spellSlot"]', html).parents('div.form-group');
     let consumeInputForm = consumeSpellSlotOption.parent();
     consumeInputForm.append(
@@ -395,7 +396,7 @@ export class ManaPoints {
     manaPointCost = ManaPoints.withActorData(settings.spellManaCosts[baseSpellLvl], actor);
     const missing_points = (typeof availableManaPoints === 'undefined' || availableManaPoints - manaPointCost < 0);
     if (missing_points) {
-      const messageNotEnough = game.i18n.format(`{MODULE_NAME}.mana.youNotEnough`, { ManaPoints: settings.name });
+      const messageNotEnough = game.i18n.format(`{MODULE_SHORT}.mana.actor.notEnoughManaMessage`, { ManaPoints: settings.name });
       $('#ability-use-form', html).append('<div class="spError">' + messageNotEnough + '</div>');
     }
   }
@@ -519,9 +520,9 @@ export class ManaPoints {
         return;  // the item is just being updated, its what we already have as our manapoints item on the actor
       }
       // there is already a manapoints item here.
-      ui.notifications.error(game.i18n.format("BlackFlag-AP.mana.alreadySpItemOwned"));
+      ui.notifications.error(game.i18n.format("BF-AST.mana.alreadySpItemOwned"));
       item.update({
-        'name': item.name + ' (' + game.i18n.format("BlackFlag-AP.mana.duplicated") + ')'
+        'name': item.name + ' (' + game.i18n.format("BF-AST.mana.duplicated") + ')'
       });
       return false;
     }
@@ -557,7 +558,7 @@ export class ManaPoints {
     const ManaPointsMax = ManaPoints._calculateManaPointsFixed(classItem, updates, actor, settings)
 
     if (ManaPointsMax > 0 && ManaPointsMax != manaPointsItem.system.uses.max) {
-      let message = game.i18n.format(`${MODULE_NAME}.mana.manaPointsUpdated`,
+      let message = game.i18n.format(`${MODULE_SHORT}.mana.actor.manaItemUpdated`,
           { ManaPoints: manaPointsItem.name, Actor: actor.name, PrevManaPoints: manaPointsItem.system.uses.max, NewManaPoints: ManaPointsMax }
       )
       manaPointsItem.update({ [`system.uses.max`]: ManaPointsMax, });
