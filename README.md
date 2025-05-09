@@ -10,7 +10,7 @@
 
 # FoundryVTT Module
 
-## BlackFlag: Advanced Play
+## BlackFlag: Advanced System Tweaks
 This is a collection of system modifications for the BlackFlag system. The changes are mostly configurable, so you can
 drop in the pieces you want to use for your game, with modifications ranging from minor tweaks to extensive play changes.
 
@@ -23,10 +23,14 @@ Initiative is now DEX + WIS across the board. You may need to adjust some monste
 Replaces standard d20 rolls with 2d10. This has wide ranging impacts to gameplay and balance assumptions. There are more
 details [here](linksomeday) with what kind of impact you can expect and options for how to adjust certain checks / DCs
 to account for the changes.
+- Crits happen on >=18 or <=4 (in foundry the result number will be green or red)
+- Super crit on 20 or 2
 
-### Mana Point system
+### Mana system
 This adds an optional (and can be used in conjunction with spell slots) mana pool system. The cost for spells and size
 of the mana pool for a character is configurable.
+Many thanks to [LuMaster](https://foundryvtt.com/community/misthero) for his amazing [Advanced Magic - Spell Points
+System 5e](https://foundryvtt.com/packages/dnd5e-spellpoints) 5e module that was the basis for all the mana code
 
 ### (TODO) NPC recharge timing
 I think an NPC should roll recharge at the end of its turn so the GM can narratively describe the recharge taking place.
@@ -63,7 +67,7 @@ CON save DC 8 + (3 * hunger) or suffer 1 exhaustion per hunger stack. Eating a r
 
 ## DEV NOTE!
 windows to wsl sym link for foundryvtt development
-New-Item -ItemType SymbolicLink -Path "F:/FoundryVTT/Data/modules/BlackFlag-AP" -Target "\\wsl$\Ubuntu22.04\home\<user>/git/FoundryVTT-BlackFlag-AP"
+New-Item -ItemType SymbolicLink -Path "F:/FoundryVTT/Data/modules/BlackFlag-AST" -Target "\\wsl$\Ubuntu22.04\home\<user>/git/FoundryVTT-BlackFlag-AST"
 
 
 # How to use this Template to create a versioned Release

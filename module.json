@@ -1,7 +1,7 @@
 {
-  "id": "BlackFlag-AP",
-  "title": "BlackFlag AP",
-  "description": "BlackFlag Advanced Placement - a system evolution of BlackFlag by KP",
+  "id": "blackflag-ast",
+  "title": "BlackFlag AST",
+  "description": "BlackFlag Advanced System Tweaks - a system modification of BlackFlag by KP",
   "version": "#{VERSION}#",
   "compatibility": {
     "minimum": "12",
@@ -45,7 +45,7 @@
     }
   ],
   "esmodules": [
-    "scripts/blackflag-ap.js"
+    "scripts/blackflag-ast.js"
   ],
   "styles": [
     "styles/module.css"
@@ -57,9 +57,9 @@
   "readme": "README.md",
   "packs": [
     {
-      "name": "blackflag-ap-items",
-      "label": "blackflag-ap items",
-      "path": "packs/blackflag-ap-items",
+      "name": "blackflag-ast-items",
+      "label": "blackflag-ast items",
+      "path": "packs/blackflag-ast-items",
       "type": "Item",
       "ownership": {
         "PLAYER": "OBSERVER",

@@ -1,4 +1,5 @@
 import { MODULE_NAME } from "./lib.js";
+import { MODULE_SHORT } from "./lib.js";
 
 /* <><><><> <><><><> <><><><> <><><><> */
 /*           Data Preparation          */
@@ -7,7 +8,7 @@ import { MODULE_NAME } from "./lib.js";
 /**
  * Calculate the derived data on initiative.
  */
-function blackFlagAPComputeInitiative() {
+function blackFlagASTComputeInitiative() {
 	const init = this.attributes.initiative ??= {};
 	init.ability ||= CONFIG.BlackFlag.defaultAbilities.initiative;
 	const ability = this.abilities[init.ability[0]];
@@ -42,7 +43,7 @@ function blackFlagAPComputeInitiative() {
 /* <><><><> <><><><> <><><><> <><><><> */
 
 /** @override */
-function blackFlagAPGetInitiativeRollConfig(options = {}) {
+function blackFlagASTGetInitiativeRollConfig(options = {}) {
 	const init = this.attributes?.initiative ?? {};
 	const abilityKey = init.ability ?? CONFIG.BlackFlag.defaultAbilities.initiative;
 	const ability = this.abilities?.[abilityKey[0]] ?? {};
@@ -77,8 +78,8 @@ function blackFlagAPGetInitiativeRollConfig(options = {}) {
 
 function initiativeSettings () {
   game.settings.register(MODULE_NAME, `overrideInitiative`, {
-    name: game.i18n.format(`${MODULE_NAME}.overrideInitiative`),
-    hint: game.i18n.format(`${MODULE_NAME}.overrideInitiativeHint`),
+    name: game.i18n.format(`${MODULE_SHORT}.settings.overrideInitiative.label`),
+    hint: game.i18n.format(`${MODULE_SHORT}.settings.overrideInitiative.hint`),
     scope: "world",
     config: true,
     requiresReload: true,
@@ -87,7 +88,7 @@ function initiativeSettings () {
   });
   // TODO allow overriding initiative config (specify which abilities / custom formula)
   //game.settings.register(MODULE_NAME, `overrideInitiativeAbilities`, {
-  //  name: game.i18n.format("blackflag-ap.overrideInitiativeAbilities"),
+  //  name: game.i18n.format("blackflag-AST.overrideInitiativeAbilities"),
   //  scope: "world",
   //  config: true,
   //  default: true,
@@ -108,32 +109,32 @@ export function updateInitiative() {
     // Why doesn't this work? Fine, I'll patch the child classes directly...
     //libWrapper.register(MODULE_NAME,
     //  'BlackFlag.data.actor.InitiativeTemplate.prototype.computeInitiative',
-    //  blackFlagAPComputeInitiative, 'OVERRIDE'
+    //  blackFlagASTComputeInitiative, 'OVERRIDE'
     //);
     //libWrapper.register(MODULE_NAME,
     //  'BlackFlag.data.actor.InitiativeTemplate.prototype.getInitiativeRollConfig',
-    //  blackFlagAPGetInitiativeRollConfig, 'OVERRIDE'
+    //  blackFlagASTGetInitiativeRollConfig, 'OVERRIDE'
     //);
     libWrapper.register(MODULE_NAME,
         'BlackFlag.data.actor.PCData.prototype.computeInitiative',
-        blackFlagAPComputeInitiative, 'OVERRIDE'
+        blackFlagASTComputeInitiative, 'OVERRIDE'
     );
     libWrapper.register(MODULE_NAME,
         'BlackFlag.data.actor.NPCData.prototype.computeInitiative',
-        blackFlagAPComputeInitiative, 'OVERRIDE'
+        blackFlagASTComputeInitiative, 'OVERRIDE'
     );
     libWrapper.register(MODULE_NAME,
         'BlackFlag.data.actor.PCData.prototype.getInitiativeRollConfig',
-        blackFlagAPGetInitiativeRollConfig, 'OVERRIDE'
+        blackFlagASTGetInitiativeRollConfig, 'OVERRIDE'
     );
     libWrapper.register(MODULE_NAME,
         'BlackFlag.data.actor.NPCData.prototype.getInitiativeRollConfig',
-        blackFlagAPGetInitiativeRollConfig, 'OVERRIDE'
+        blackFlagASTGetInitiativeRollConfig, 'OVERRIDE'
     );
     // without libwrapper (for easier testing)
-    //BlackFlag.data.actor.PCData.prototype.computeInitiative = blackFlagAPComputeInitiative;
-    //BlackFlag.data.actor.PCData.prototype.getInitiativeRollConfig = blackFlagAPGetInitiativeRollConfig;
-    //BlackFlag.data.actor.InitiativeTemplate.prototype.computeInitiative = blackFlagAPComputeInitiative;
-    //BlackFlag.data.actor.InitiativeTemplate.prototype.getInitiativeRollConfig = blackFlagAPGetInitiativeRollConfig;
+    //BlackFlag.data.actor.PCData.prototype.computeInitiative = blackFlagASTComputeInitiative;
+    //BlackFlag.data.actor.PCData.prototype.getInitiativeRollConfig = blackFlagASTGetInitiativeRollConfig;
+    //BlackFlag.data.actor.InitiativeTemplate.prototype.computeInitiative = blackFlagASTComputeInitiative;
+    //BlackFlag.data.actor.InitiativeTemplate.prototype.getInitiativeRollConfig = blackFlagASTGetInitiativeRollConfig;
   }
 }
