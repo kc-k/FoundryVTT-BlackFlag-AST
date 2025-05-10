@@ -1,7 +1,7 @@
 import { MODULE_NAME } from "./lib.js";
 import { updateChallengeDie } from "./challenge-die.js";
 import { updateInitiative } from "./initiative.js";
-import { setupMana } from "./mana-points.js";
+import { setupMana } from "./mana.js";
 
 Hooks.once('init', async function() {
   //CONFIG.debug.hooks = true;

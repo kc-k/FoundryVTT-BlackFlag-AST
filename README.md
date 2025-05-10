@@ -28,7 +28,9 @@ to account for the changes.
 
 ### Mana system
 This adds an optional (and can be used in conjunction with spell slots) mana pool system. The cost for spells and size
-of the mana pool for a character is configurable.
+of the mana pool for a character is configurable. To use mana for a character, simply add the "Mana" item from the module
+compendium to the PCs features.
+
 Many thanks to [LuMaster](https://foundryvtt.com/community/misthero) for his amazing [Advanced Magic - Spell Points
 System 5e](https://foundryvtt.com/packages/dnd5e-spellpoints) 5e module that was the basis for all the mana code
 

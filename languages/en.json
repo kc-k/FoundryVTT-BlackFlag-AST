@@ -35,16 +35,16 @@
 
 "BF-AST.mana": {
     "actor": {
-        "alreadySpItemOwned": "There is already a mana point item on this character. Please remove the duplicate.",
-        "consumeManaInput": "Consume {ManaPoints}",
+        "alreadyManaItemOwned": "There is already a mana point item on this character. Please remove the duplicate.",
+        "consumeManaInput": "Consume {ManaName}",
         "duplicated": "Duplicate. Please remove.",
-        "manaItemUpdated": "Found '{ManaPoints}' on {Actor} character sheet! Your Maximum {ManaPoints} have been updated from {PrevManaPoints} to {NewManaPoints}.",
-        "noManaItemMessage": "{ActorName} doesn't have any resource named {ManaPoints}. Please add a 'Class Feature' Item '{ManaPoints}' to cast this spell. (Item ID: {ManaItem})",
-        "notEnoughMana": "{ActorName} doesn't have enough {ManaPoints} to cast this spell.",
-        "pleaseCreateManaItem": "Please add an Item '{ManaPoints}' to cast this spell. (Item ID: {ManaItem})",
-        "spellCost": "Costs {amount} of {available} {ManaPoints}",
-        "spellUsingManaMessage": "{ActorName} cast a spell using {manaPointUsed} {ManaPoints}. {remainingPoints} {ManaPoints} remaining.",
-        "notEnoughManaMessage": "You don't have enough '{ManaPoints}' to cast this spell."
+        "manaItemUpdated": "Found '{ManaItem}' on {Actor} character sheet! Your Maximum {ManaItem} have been updated from {PrevManaItem} to {NewManaItem}.",
+        "noManaItemMessage": "{ActorName} doesn't have any resource named {ManaName}. Please add an Item '{ManaName}' to cast this spell. (Item ID: {ManaItem})",
+        "notEnoughMana": "{ActorName} doesn't have enough {ManaName} to cast this spell.",
+        "pleaseCreateManaItem": "Please add an Item '{ManaName}' to cast this spell. (Item ID: {ManaItem})",
+        "spellCost": "Costs {amount} of {available} {ManaName}",
+        "spellUsingManaMessage": "{ActorName} cast a spell using {manaItemUsed} {ManaItem}. {remainingPoints} {ManaItem} remaining.",
+        "notEnoughManaMessage": "You don't have enough '{ManaName}' to cast this spell."
     },
     "itemConfig": {
         "autoCalculate": {
@@ -52,10 +52,10 @@
             "hint": "Enable this setting if you want the module to do the math for you every time a player character advances in a class level or gains a new class."
         },
         "costs": {
-            "sectionLabel": "{ManaPoints} Costs.",
+            "sectionLabel": "{ManaItem} Costs.",
             "sectionHint": "You don't need to change the mana point costs if you are using the default mana point rules in DMG (page 288). You can use formulas to determine the cost.",
             "costAtCircle": "Level {slotLevel} spell circle costs:",
-            "tableCostToCastHeader": "{ManaPoints} Needed to Cast.",
+            "tableCostToCastHeader": "{ManaItem} Needed to Cast.",
             "tableSpellCircleHeader": "Spell Circle."
         },
         "leveledProgression": {
@@ -64,10 +64,10 @@
             "enableHint": "If you need calculation on NPC remeber that this setting won't work for casters NPCs since they have no class nor caster level in Foundry. If you want some kind of calculation for caster NPCs, use the single formula (you can do that just for NPCs by overriding this setting on their specific Mana Points item).",
             "extraManaTermsLabel": "Extra Mana Terms",
             "extraManaTermsHint": "append this box's contents to the calculation formula at every level ex. \"+ 50\" adds 50 extra mana or \"* 1.5\" increases mana by 50%. To reference a level there is a special notation: ex. \"+ ATLEVEL[% @progression.classes.wizard.levels %] * 0.5\" which adds 50% more for every wizard level you have",
-            "sectionLabel": "{ManaPoints} by Level Progression.",
+            "sectionLabel": "{ManaItem} by Level Progression.",
             "sectionHint": "The mana a character would have at any given caster level. You can use formulas, such as: '5+@attributes.spellmod', if you want to add the spellcasting modifier to the fixed number of mana points.",
             "tableLevelHeader": "Caster Level.",
-            "tableAmountHeader": "Maximum {ManaPoints}."
+            "tableAmountHeader": "Maximum {ManaItem}."
         },
         "settingsEndSection": "End of Settings",
         "settingsTitleSection": "Mana Settings (Click here for options)"
